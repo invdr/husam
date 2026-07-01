@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #1d1d1b;
+  color: white;
+  font-family: "Mulish", sans-serif;
+  overflow-x: hidden;
+}
+
+.will-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a36;
+  border-radius: 10px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.form-error {
+  border-color: #ef4444 !important;
+}

@@ -1,0 +1,197 @@
+[
+  {
+    "name": "projects",
+    "type": "base",
+    "system": false,
+    "listRule": "published = true || @request.auth.id != ''",
+    "viewRule": "published = true || @request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "external_id", "type": "text", "required": true, "system": false },
+      { "name": "title", "type": "text", "required": true, "system": false },
+      { "name": "description", "type": "editor", "required": false, "system": false },
+      { "name": "type", "type": "text", "required": false, "system": false },
+      { "name": "area", "type": "text", "required": false, "system": false },
+      { "name": "duration", "type": "text", "required": false, "system": false },
+      { "name": "budget", "type": "text", "required": false, "system": false },
+      { "name": "location", "type": "text", "required": false, "system": false },
+      { "name": "scope", "type": "json", "required": false, "system": false },
+      { "name": "images", "type": "file", "required": false, "system": false, "options": { "maxSelect": 99, "maxSize": 52428800, "mimeTypes": [], "thumbs": [] } },
+      { "name": "testimonial", "type": "editor", "required": false, "system": false },
+      { "name": "client_name", "type": "text", "required": false, "system": false },
+      { "name": "sort_order", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } },
+      { "name": "sort_order_in_category", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } },
+      { "name": "featured", "type": "bool", "required": false, "system": false },
+      { "name": "published", "type": "bool", "required": false, "system": false },
+      { "name": "attributes", "type": "json", "required": false, "system": false }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_projects_sort_order ON projects (sort_order)",
+      "CREATE INDEX idx_projects_published ON projects (published)",
+      "CREATE UNIQUE INDEX idx_projects_external_id ON projects (external_id)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "project_types",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "name", "type": "text", "required": true, "system": false },
+      { "name": "sort_order", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_project_types_sort_order ON project_types (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_projects",
+    "type": "base",
+    "system": false,
+    "listRule": "published = true || @request.auth.id != ''",
+    "viewRule": "published = true || @request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "external_id", "type": "text", "required": true, "system": false },
+      { "name": "title", "type": "text", "required": true, "system": false },
+      { "name": "description", "type": "editor", "required": false, "system": false },
+      { "name": "has_garage", "type": "bool", "required": false, "system": false },
+      { "name": "has_canopy", "type": "bool", "required": false, "system": false },
+      { "name": "has_basement", "type": "bool", "required": false, "system": false },
+      { "name": "room_explanation", "type": "editor", "required": false, "system": false },
+      { "name": "type", "type": "text", "required": false, "system": false },
+      { "name": "area", "type": "text", "required": false, "system": false },
+      { "name": "rooms", "type": "text", "required": false, "system": false },
+      { "name": "floors", "type": "text", "required": false, "system": false },
+      { "name": "material", "type": "text", "required": false, "system": false },
+      { "name": "price", "type": "text", "required": false, "system": false },
+      { "name": "old_price", "type": "text", "required": false, "system": false },
+      { "name": "construction_price_from", "type": "text", "required": false, "system": false },
+      { "name": "status", "type": "text", "required": false, "system": false },
+      { "name": "images", "type": "file", "required": false, "system": false, "options": { "maxSelect": 99, "maxSize": 52428800, "mimeTypes": [], "thumbs": [] } },
+      { "name": "sort_order", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } },
+      { "name": "sort_order_in_category", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } },
+      { "name": "featured", "type": "bool", "required": false, "system": false },
+      { "name": "published", "type": "bool", "required": false, "system": false },
+      { "name": "attributes", "type": "json", "required": false, "system": false },
+      { "name": "plot_area", "type": "text", "required": false, "system": false },
+      { "name": "house_area", "type": "text", "required": false, "system": false },
+      { "name": "usable_area", "type": "text", "required": false, "system": false },
+      { "name": "implementation_period", "type": "text", "required": false, "system": false },
+      { "name": "house_dimensions", "type": "text", "required": false, "system": false }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_projects_sort_order ON sale_projects (sort_order)",
+      "CREATE INDEX idx_sale_projects_published ON sale_projects (published)",
+      "CREATE UNIQUE INDEX idx_sale_projects_external_id ON sale_projects (external_id)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_project_types",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "name", "type": "text", "required": true, "system": false },
+      { "name": "sort_order", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_types_sort_order ON sale_project_types (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "site_settings",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "key", "type": "text", "required": true, "system": false },
+      { "name": "value", "type": "text", "required": false, "system": false }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_site_settings_key ON site_settings (key)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "faq",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "question", "type": "text", "required": true, "system": false },
+      { "name": "answer", "type": "editor", "required": true, "system": false },
+      { "name": "sort_order", "type": "number", "required": false, "system": false, "options": { "min": null, "max": null, "noDecimal": true } }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_faq_sort_order ON faq (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "page_content",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      { "name": "key", "type": "text", "required": true, "system": false },
+      { "name": "value", "type": "editor", "required": false, "system": false }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_page_content_key ON page_content (key)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "admins",
+    "type": "auth",
+    "system": false,
+    "listRule": "@request.auth.role = 'owner'",
+    "viewRule": "@request.auth.role = 'owner' || id = @request.auth.id",
+    "createRule": "@request.auth.role = 'owner'",
+    "updateRule": "@request.auth.role = 'owner'",
+    "deleteRule": "@request.auth.role = 'owner'",
+    "fields": [
+      { "name": "name", "type": "text", "required": false, "system": false },
+      { "name": "role", "type": "select", "required": false, "system": false, "options": { "maxSelect": 1, "values": ["owner", "editor"] } }
+    ],
+    "indexes": [],
+    "options": {
+      "allowEmailAuth": true,
+      "allowOAuth2Auth": false,
+      "allowUsernameAuth": false,
+      "exceptEmailDomains": null,
+      "manageRule": "@request.auth.id != ''",
+      "minPasswordLength": 8,
+      "onlyEmailDomains": null
+    }
+  }
+]

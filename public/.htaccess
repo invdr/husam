@@ -1,0 +1,12 @@
+# SPA routing: отдаём index.html для маршрутов React Router (например /catalog/HS-010).
+# Требуется: mod_rewrite и AllowOverride (FileInfo или All) для каталога сайта.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Реальные файлы и папки (статика, robots.txt и т.д.) — как есть
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Остальное — в приложение
+  RewriteRule ^ index.html [L]
+</IfModule>

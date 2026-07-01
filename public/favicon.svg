@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#000"/>
+  <!-- Желтая крыша -->
+  <path d="M 8 32 L 32 12 L 56 32 L 56 48 L 8 48 Z" fill="#FFD700" stroke="#FFD700" stroke-width="2"/>
+  <!-- Белая левая стена (часть буквы Х) -->
+  <rect x="8" y="32" width="8" height="16" fill="#FFF"/>
+  <!-- Желтая правая стена -->
+  <rect x="48" y="32" width="8" height="16" fill="#FFD700"/>
+</svg>
+
