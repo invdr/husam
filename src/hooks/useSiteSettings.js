@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { useMountedRef } from "@/hooks/useMountedRef";
 
 const DEFAULT_KEYS = [
   "address",
@@ -27,10 +28,12 @@ export function useSiteSettings() {
   const [settings, setSettings] = useState(() => ({ ...DEFAULTS }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useMountedRef();
 
   const fetchSettings = useCallback(async () => {
     try {
       const data = await pb.collection("site_settings").getFullList();
+      if (!mountedRef.current) return;
 
       const map = { ...DEFAULTS };
       (data || []).forEach(({ key, value }) => {
@@ -39,12 +42,13 @@ export function useSiteSettings() {
       setSettings(map);
       setError(null);
     } catch (err) {
+      if (!mountedRef.current) return;
       setError(err);
       setSettings({ ...DEFAULTS });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [mountedRef]);
 
   useEffect(() => {
     fetchSettings();

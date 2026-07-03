@@ -59,6 +59,7 @@ function ProjectGallery({ images, projectTitle }) {
                   (prev) => (prev - 1 + images.length) % images.length
                 );
               }}
+              onKeyDown={(e) => e.stopPropagation()}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 hover:bg-black/70 p-2.5 text-white transition-colors"
               aria-label="Предыдущее фото"
             >
@@ -70,6 +71,7 @@ function ProjectGallery({ images, projectTitle }) {
                 e.stopPropagation();
                 setCurrentImageIndex((prev) => (prev + 1) % images.length);
               }}
+              onKeyDown={(e) => e.stopPropagation()}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 hover:bg-black/70 p-2.5 text-white transition-colors"
               aria-label="Следующее фото"
             >

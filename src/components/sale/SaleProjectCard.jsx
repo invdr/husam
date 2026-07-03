@@ -95,6 +95,7 @@ export default function SaleProjectCard({
                   event.stopPropagation();
                   onRequestClick(project);
                 }}
+                onKeyDown={(event) => event.stopPropagation()}
                 className="inline-flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-ink shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink active:opacity-80 sm:w-auto"
               >
                 <Icon name="shopping-cart" className="h-4 w-4" />

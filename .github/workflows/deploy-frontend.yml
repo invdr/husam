@@ -38,12 +38,25 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Generate sitemap
+        run: node scripts/generate-sitemap.mjs dist/sitemap.xml
+        env:
+          POCKETBASE_URL: https://api.husam.ru
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
           printf '%s' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H 77.222.63.88 >> ~/.ssh/known_hosts
+          if [ -n "${{ secrets.VPS_KNOWN_HOSTS }}" ]; then
+            # Зафиксированный ключ хоста (вывод `ssh-keyscan -H 77.222.63.88`) —
+            # защищает деплой от подмены хоста (MITM).
+            printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          else
+            # Fallback: доверие при первом использовании. Рекомендуется задать
+            # секрет VPS_KNOWN_HOSTS, чтобы не сканировать ключ на каждом деплое.
+            ssh-keyscan -H 77.222.63.88 >> ~/.ssh/known_hosts
+          fi
 
       - name: Deploy to VPS
         run: |

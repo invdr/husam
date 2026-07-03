@@ -19,6 +19,14 @@ const TYPE_LABELS = { "Дизайн проекты": "Дизайн" };
 const ALL_FILTER = "Все";
 const PAGE_SIZE = 12;
 
+// Разбор ?type= из URL с учётом legacy-алиасов: старые ссылки вида
+// /catalog?type=Дизайн должны попадать в актуальную категорию, а не
+// сбрасываться на «Все».
+function resolveTypeParam(urlType) {
+  if (!urlType || urlType === "all") return ALL_FILTER;
+  return TYPE_ALIASES[urlType] ?? urlType;
+}
+
 // Компонент с ключом по фильтру/сортировке — при смене remount, currentPage сбрасывается в 1
 function CatalogPaginatedList({
   filteredAndSortedProjects,
@@ -88,11 +96,9 @@ export default function Catalog() {
     normalizeCatalogSortParam(searchParams.get("sort"))
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(() => {
-    const urlType = searchParams.get("type");
-    if (!urlType || urlType === "all") return ALL_FILTER;
-    return urlType;
-  });
+  const [activeFilter, setActiveFilter] = useState(() =>
+    resolveTypeParam(searchParams.get("type"))
+  );
   const [reportedPage, setReportedPage] = useState(1);
 
   // Синхронизация activeFilter при загрузке types (если URL содержит несуществующий тип)
@@ -102,7 +108,7 @@ export default function Catalog() {
       activeFilter !== ALL_FILTER &&
       !types.includes(activeFilter)
     ) {
-      const urlType = searchParams.get("type");
+      const urlType = resolveTypeParam(searchParams.get("type"));
       setActiveFilter(types.includes(urlType) ? urlType : ALL_FILTER);
     }
   }, [types, activeFilter, searchParams]);

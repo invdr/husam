@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { useMountedRef } from "@/hooks/useMountedRef";
 import {
   HERO_DEFAULTS,
   ADVANTAGES_DEFAULTS,
@@ -37,10 +38,12 @@ export function usePageContent() {
   const [content, setContent] = useState(() => ({ ...DEFAULTS_MAP }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useMountedRef();
 
   const fetchContent = useCallback(async () => {
     try {
       const data = await pb.collection("page_content").getFullList();
+      if (!mountedRef.current) return;
 
       const map = { ...DEFAULTS_MAP };
       (data || []).forEach(({ key, value }) => {
@@ -54,12 +57,13 @@ export function usePageContent() {
       if (err?.isAbort || /autocancelled|aborted|cancell?ed/i.test(err?.message || "")) {
         return;
       }
+      if (!mountedRef.current) return;
       setError(err);
       setContent({ ...DEFAULTS_MAP });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [mountedRef]);
 
   useEffect(() => {
     fetchContent();

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
 import {
   isPocketbaseAbortError,
@@ -57,17 +57,27 @@ export function normalizeProject(row) {
   };
 }
 
+// Кэш последней успешной выборки на уровне модуля: при повторном маунте
+// (переходы Каталог → проект → Каталог) данные показываются сразу, без
+// скелетонов, а свежая выборка выполняется в фоне.
+let projectsCache = null;
+
 /**
  * Загружает проекты из PocketBase.
  * Подписывается на Realtime: при INSERT/UPDATE/DELETE перезапрашивает список.
  * @returns {{ projects: Array, loading: boolean, error: Error | null }}
  */
 export function useProjects() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState(() => projectsCache ?? []);
+  const [loading, setLoading] = useState(() => projectsCache === null);
   const [error, setError] = useState(null);
+  const fetchSeq = useRef(0);
 
   const fetchProjects = useCallback(async (isInitial = false) => {
+    // autoCancellation у PocketBase отключён, поэтому защищаемся от гонки
+    // сами: ответ применяется только если за время ожидания не стартовал
+    // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
+    const seq = ++fetchSeq.current;
     try {
       const [projectsData, typesData] = await Promise.all([
         pb.collection("projects").getFullList({
@@ -78,6 +88,8 @@ export function useProjects() {
           sort: "sort_order",
         }),
       ]);
+
+      if (seq !== fetchSeq.current) return;
 
       const typeOrder = new Map(
         (typesData || []).map((t, i) => [t.name, t.sort_order ?? i])
@@ -92,12 +104,15 @@ export function useProjects() {
           return (a.sortOrderInCategory ?? 999) - (b.sortOrderInCategory ?? 999);
         });
 
+      projectsCache = normalized;
       setProjects(normalized);
       setError(null);
     } catch (err) {
       if (isPocketbaseAbortError(err)) {
         return;
       }
+      if (seq !== fetchSeq.current) return;
+      projectsCache = null;
       setError(err);
       setProjects([]);
     } finally {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { useMountedRef } from "@/hooks/useMountedRef";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
 
 const QUIZ_KEY = "quiz_config";
@@ -54,6 +55,7 @@ export function useQuiz() {
   const [config, setConfig] = useState(() => ({ ...QUIZ_DEFAULTS }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useMountedRef();
 
   const fetchQuiz = useCallback(async () => {
     try {
@@ -62,15 +64,17 @@ export function useQuiz() {
         .collection("page_content")
         .getFirstListItem(filter)
         .catch(() => null);
+      if (!mountedRef.current) return;
       setConfig(parseQuizConfig(data?.value ?? null));
       setError(null);
     } catch (err) {
+      if (!mountedRef.current) return;
       setError(err);
       setConfig({ ...QUIZ_DEFAULTS });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [mountedRef]);
 
   useEffect(() => {
     fetchQuiz();

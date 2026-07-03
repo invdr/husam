@@ -3,29 +3,55 @@ import { useLocation } from "react-router-dom";
 import { useLoading } from "@/contexts/LoadingContext";
 import Icon from "./Icon";
 
+function isLoaderTargetPath(pathname) {
+  return pathname.includes("/catalog") || pathname.startsWith("/projects");
+}
+
 export default function PageLoader() {
   const { isPageLoading, setIsPageLoading } = useLoading();
   const location = useLocation();
   const showStartTime = useRef(null);
+  const wasOnTargetPage = useRef(false);
   const minDisplayTime = 800; // Минимальное время показа индикатора (800ms)
+  const maxDisplayTime = 5000; // Страховка: дольше этого оверлей не живёт никогда
 
   // Показываем индикатор при установке isPageLoading
   useEffect(() => {
     showStartTime.current = Date.now();
+    if (isPageLoading) {
+      wasOnTargetPage.current = false;
+    }
   }, [isPageLoading]);
+
+  // Страховочный таймаут: что бы ни случилось с навигацией, оверлей
+  // не должен блокировать сайт дольше maxDisplayTime.
+  useEffect(() => {
+    if (!isPageLoading) return;
+    const failsafe = setTimeout(() => {
+      setIsPageLoading(false);
+      showStartTime.current = null;
+    }, maxDisplayTime);
+    return () => clearTimeout(failsafe);
+  }, [isPageLoading, setIsPageLoading]);
 
   // Скрываем индикатор при смене локации на каталог или проекты (когда страница загрузилась)
   useEffect(() => {
-    const isCatalogPage =
-      location.pathname === "/catalog" ||
-      location.pathname.includes("/catalog") ||
-      location.pathname.endsWith("/catalog");
-    const isProjectsPage =
-      location.pathname === "/projects" ||
-      location.pathname.startsWith("/projects/");
-
     if (!isPageLoading) return;
-    if (!isCatalogPage && !isProjectsPage) return;
+
+    const isTargetPage = isLoaderTargetPath(location.pathname);
+
+    if (!isTargetPage) {
+      // Пользователь уже был на каталоге/проектах и ушёл (например, жестом
+      // «назад») до окончания minDisplayTime — снимаем оверлей сразу,
+      // иначе он останется висеть поверх другой страницы.
+      if (wasOnTargetPage.current) {
+        setIsPageLoading(false);
+        showStartTime.current = null;
+      }
+      return;
+    }
+
+    wasOnTargetPage.current = true;
 
     const start = showStartTime.current;
     const elapsed = start ? Date.now() - start : 0;

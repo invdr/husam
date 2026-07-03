@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
 import {
   isPocketbaseAbortError,
@@ -79,16 +79,25 @@ export function normalizeSaleProject(row) {
   };
 }
 
+// Кэш последней успешной выборки на уровне модуля: при повторном маунте
+// данные показываются сразу, без скелетонов, а свежая выборка идёт в фоне.
+let saleProjectsCache = null;
+
 /**
  * Загружает готовые проекты на продажу (sale_projects) из PocketBase
  * и подписывается на realtime-обновления.
  */
 export function useSaleProjects() {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState(() => saleProjectsCache ?? []);
+  const [loading, setLoading] = useState(() => saleProjectsCache === null);
   const [error, setError] = useState(null);
+  const fetchSeq = useRef(0);
 
   const fetchProjects = useCallback(async (isInitial = false) => {
+    // autoCancellation у PocketBase отключён, поэтому защищаемся от гонки
+    // сами: ответ применяется только если за время ожидания не стартовал
+    // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
+    const seq = ++fetchSeq.current;
     try {
       const [projectsData, typesData] = await Promise.all([
         pb.collection("sale_projects").getFullList({
@@ -99,6 +108,8 @@ export function useSaleProjects() {
           sort: "sort_order",
         }),
       ]);
+
+      if (seq !== fetchSeq.current) return;
 
       const typeOrder = new Map(
         (typesData || []).map((typeRow, index) => [
@@ -116,12 +127,15 @@ export function useSaleProjects() {
           return (a.sortOrderInCategory ?? 999) - (b.sortOrderInCategory ?? 999);
         });
 
+      saleProjectsCache = normalized;
       setProjects(normalized);
       setError(null);
     } catch (err) {
       if (isPocketbaseAbortError(err)) {
         return;
       }
+      if (seq !== fetchSeq.current) return;
+      saleProjectsCache = null;
       setError(err);
       setProjects([]);
     } finally {

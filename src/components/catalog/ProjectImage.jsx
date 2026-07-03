@@ -4,6 +4,11 @@ import Icon from "@/components/common/Icon";
 
 const LOADER_DELAY_MS = 80;
 
+// Карточка-обёртка (div role="button") слушает keydown и по Enter открывает
+// страницу проекта. Не даём Enter/Space на внутренних кнопках карусели
+// всплыть до неё — иначе вместо листания фото происходит переход.
+const stopKeyPropagation = (e) => e.stopPropagation();
+
 export default function ProjectImage({ project, className = "" }) {
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -104,6 +109,7 @@ export default function ProjectImage({ project, className = "" }) {
         <>
           <button
             onClick={prevImage}
+            onKeyDown={stopKeyPropagation}
             className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 p-1.5 md:p-2 text-white transition-all opacity-0 group-hover/image:opacity-100 z-10"
             aria-label="Предыдущее фото"
           >
@@ -111,6 +117,7 @@ export default function ProjectImage({ project, className = "" }) {
           </button>
           <button
             onClick={nextImage}
+            onKeyDown={stopKeyPropagation}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 p-1.5 md:p-2 text-white transition-all opacity-0 group-hover/image:opacity-100 z-10"
             aria-label="Следующее фото"
           >
@@ -124,6 +131,7 @@ export default function ProjectImage({ project, className = "" }) {
                   e.stopPropagation();
                   switchToIndex(index);
                 }}
+                onKeyDown={stopKeyPropagation}
                 className={`h-1.5 rounded-full transition-all ${
                   index === currentImageIndex
                     ? "w-4 bg-brand"
