@@ -144,6 +144,7 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
     skipExisting: true,
     dropActive: false,
     progress: { done: 0, total: 0 },
+    rowErrors: [],
   });
 
   const {
@@ -155,6 +156,7 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
     skipExisting,
     dropActive,
     progress,
+    rowErrors,
   } = state;
 
   const setFile = (nextFile) =>
@@ -171,6 +173,8 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
     setState((s) => ({ ...s, dropActive: next }));
   const setProgress = (next) =>
     setState((s) => ({ ...s, progress: next }));
+  const setRowErrors = (next) =>
+    setState((s) => ({ ...s, rowErrors: next }));
 
   const valid = useMemo(
     () => rows.filter((r) => r.errors.length === 0).map((r) => r.row),
@@ -203,6 +207,7 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
     setExistingIds(new Set());
     setSkipExisting(true);
     setProgress({ done: 0, total: 0 });
+    setRowErrors([]);
 
     try {
       const raw = await parseInputFile(picked);
@@ -237,41 +242,76 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
       return;
     }
     setImporting(true);
-    setProgress({ done: 0, total: validForImport.length });
+    setRowErrors([]);
 
     try {
+      // Импорт не идемпотентен по умолчанию: если предыдущий запуск создал часть
+      // строк и упал на середине, снапшот existingIds, снятый при выборе файла,
+      // уже устарел. Поэтому перед стартом всегда перезапрашиваем актуальный
+      // список external_id и фильтруем по нему заново.
+      const freshExistingIds = await fetchExistingIds(
+        valid.map((r) => r.id).filter(Boolean),
+      );
+      setExistingIds(freshExistingIds);
+
+      const rowsToImport = skipExisting
+        ? valid.filter((r) => !freshExistingIds.has(r.id))
+        : valid;
+      const alreadySkipped = valid.length - rowsToImport.length;
+
+      if (!skipExisting && rowsToImport.some((r) => freshExistingIds.has(r.id))) {
+        toast.error("Обнаружены новые дубликаты ID в базе. Включите пропуск существующих и повторите импорт.");
+        setImporting(false);
+        return;
+      }
+
+      setProgress({ done: 0, total: rowsToImport.length });
+
       // 1) гарантируем, что категории существуют (иначе проекты не видны в админке)
-      await ensureSaleTypesExist(validForImport.map((r) => r.type));
+      await ensureSaleTypesExist(rowsToImport.map((r) => r.type));
 
       // 2) проставляем sort_order_in_category в конце каждой категории
-      const nextByType = await getNextSortOrderByType(validForImport.map((r) => r.type));
+      const nextByType = await getNextSortOrderByType(rowsToImport.map((r) => r.type));
       const counters = new Map(nextByType);
 
-      const insertRows = validForImport.map((r) => {
+      const insertRows = rowsToImport.map((r) => {
         const next = counters.get(r.type) ?? 0;
         counters.set(r.type, next + 1);
         return buildSaleProjectImportPayload(r, next);
       });
 
+      // Ошибка на одной строке не должна прерывать импорт остальных: собираем
+      // ошибки по строкам и продолжаем, чтобы повторный запуск не дублировал
+      // уже успешно созданные записи.
+      let created = 0;
+      const failedRows = [];
       for (let i = 0; i < insertRows.length; i += CHUNK_SIZE) {
         const chunk = insertRows.slice(i, i + CHUNK_SIZE);
         for (const row of chunk) {
           try {
             await pb.collection("sale_projects").create(row);
+            created += 1;
           } catch (error) {
             const details = formatPocketbaseError(error, "Ошибка создания записи");
-            throw new Error(
-              `Строка ID "${row.external_id}": ${details}`,
-            );
+            failedRows.push({ id: row.external_id, message: details });
           }
         }
         setProgress({ done: Math.min(i + chunk.length, insertRows.length), total: insertRows.length });
       }
 
-      const skipped = valid.length - insertRows.length;
-      toast.success(skipped > 0 ? `Импортировано: ${insertRows.length} (пропущено: ${skipped})` : `Импортировано: ${insertRows.length}`);
+      setRowErrors(failedRows);
+
+      const skipped = alreadySkipped;
+      const summary = `Создано: ${created}, пропущено: ${skipped}, ошибок: ${failedRows.length}`;
+      if (failedRows.length > 0) {
+        toast.error(summary);
+      } else {
+        toast.success(summary);
+      }
       onImported?.();
-      onClose?.();
+      if (failedRows.length === 0) {
+        onClose?.();
+      }
     } catch (e) {
       toast.error(e?.message ?? formatPocketbaseError(e, "Ошибка импорта"));
     } finally {
@@ -280,7 +320,12 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
   };
 
   return (
-    <Modal title="Импорт готовых проектов (CSV)" onClose={onClose} maxWidth="max-w-4xl">
+    <Modal
+      title="Импорт готовых проектов (CSV)"
+      onClose={onClose}
+      maxWidth="max-w-4xl"
+      closeDisabled={importing}
+    >
       <div className="space-y-4">
         <div className="rounded-xl border border-brand/20 bg-ink/40 p-4 text-sm text-gray-300">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -429,6 +474,22 @@ export default function SaleProjectsImportModal({ onClose, onImported }) {
             <div className="mt-2 max-h-24 overflow-auto rounded-lg bg-black/20 p-2 text-amber-100">
               {duplicatesInDb.slice(0, 50).join(", ")}
               {duplicatesInDb.length > 50 ? "…" : ""}
+            </div>
+          </div>
+        )}
+
+        {rowErrors.length > 0 && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+            <div className="font-medium">
+              Не удалось создать {rowErrors.length}{" "}
+              {rowErrors.length === 1 ? "строку" : "строк(и)"}. Остальные строки импортированы, повторный импорт не создаст дубликаты.
+            </div>
+            <div className="mt-2 max-h-32 overflow-auto rounded-lg bg-black/20 p-2 text-red-100">
+              {rowErrors.map((e) => (
+                <div key={`row-error-${e.id}`}>
+                  ID «{e.id}»: {e.message}
+                </div>
+              ))}
             </div>
           </div>
         )}

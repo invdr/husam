@@ -3,12 +3,18 @@ import Icon from "./Icon";
 
 /**
  * Модальное окно с заголовком и кнопкой закрытия.
- * @param {{ title: string, children: React.ReactNode, onClose: () => void, maxWidth?: string }} props
+ * @param {{ title: string, children: React.ReactNode, onClose: () => void, maxWidth?: string, closeDisabled?: boolean }} props
  */
-export default function Modal({ title, children, onClose, maxWidth = "max-w-lg" }) {
+export default function Modal({
+  title,
+  children,
+  onClose,
+  maxWidth = "max-w-lg",
+  closeDisabled = false,
+}) {
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !closeDisabled) onClose();
     };
     document.addEventListener("keydown", handleEscape);
     document.body.style.overflow = "hidden";
@@ -16,7 +22,12 @@ export default function Modal({ title, children, onClose, maxWidth = "max-w-lg" 
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, closeDisabled]);
+
+  const handleClose = () => {
+    if (closeDisabled) return;
+    onClose();
+  };
 
   return (
     <div
@@ -28,7 +39,7 @@ export default function Modal({ title, children, onClose, maxWidth = "max-w-lg" 
       <button
         type="button"
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
         aria-label="Закрыть"
       />
       <div
@@ -40,8 +51,9 @@ export default function Modal({ title, children, onClose, maxWidth = "max-w-lg" 
           </h3>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-ink hover:text-white transition-colors"
+            onClick={handleClose}
+            disabled={closeDisabled}
+            className="rounded-lg p-1 text-gray-400 hover:bg-ink hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
             aria-label="Закрыть"
           >
             <Icon name="x" className="h-5 w-5" />

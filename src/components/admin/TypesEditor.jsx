@@ -44,6 +44,15 @@ export default function TypesEditor({ types, onClose, onUpdate }) {
       return;
     }
 
+    const isTaken = items.some(
+      ({ name }) =>
+        name !== oldName && name.trim().toLowerCase() === newVal.toLowerCase()
+    );
+    if (isTaken) {
+      toast.error("Категория с таким названием уже существует");
+      return;
+    }
+
     try {
       const escapedOld = String(oldName).replace(/"/g, '\\"');
       const oldRow = await pb

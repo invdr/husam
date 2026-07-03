@@ -170,19 +170,38 @@ export default function SaleProjectsEditor() {
     });
   }, []);
 
+  // Очередь сохранений реордера: каждое новое сохранение ждёт завершения
+  // предыдущего, иначе два быстрых перетаскивания шлют параллельные PATCH
+  // и создают гонку/смешанный порядок в БД. UI при этом остаётся оптимистичным.
+  const reorderQueueRef = useRef(Promise.resolve());
+
   const handleDragEndInCategory = useCallback(
-    async (categoryType, reordered) => {
-      const updates = reordered.map((project, index) =>
-        pb
-          .collection("sale_projects")
-          .update(project.recordId ?? project.id, { sort_order_in_category: index }),
-      );
-      try {
-        await Promise.all(updates);
-      } catch {
-        toast.error("Не удалось сохранить порядок");
-        await fetchProjects();
-      }
+    (categoryType, reordered) => {
+      reorderQueueRef.current = reorderQueueRef.current
+        .catch(() => {})
+        .then(async () => {
+          // PATCH только для записей, у которых sort_order реально изменился.
+          const changed = reordered
+            .map((project, index) => ({ project, index }))
+            .filter(
+              ({ project, index }) =>
+                (project.sortOrderInCategory ?? null) !== index,
+            );
+          const updates = changed.map(({ project, index }) =>
+            pb
+              .collection("sale_projects")
+              .update(project.recordId ?? project.id, {
+                sort_order_in_category: index,
+              }),
+          );
+          try {
+            await Promise.all(updates);
+          } catch {
+            toast.error("Не удалось сохранить порядок");
+            await fetchProjects();
+          }
+        });
+      return reorderQueueRef.current;
     },
     [fetchProjects],
   );
@@ -369,7 +388,10 @@ export default function SaleProjectsEditor() {
             if (oldIdx === -1 || newIdx === -1) return;
 
             const reordered = arrayMove(categoryProjects, oldIdx, newIdx);
-            applyReorderToProjects(activeProject.type, reordered);
+            applyReorderToProjects(
+              activeProject.type,
+              reordered.map((p, i) => ({ ...p, sortOrderInCategory: i })),
+            );
             handleDragEndInCategory(activeProject.type, reordered);
           }}
         >

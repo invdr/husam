@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
+  useUnsavedChangesWarning,
+  confirmDiscard,
+} from "@/hooks/useUnsavedChangesWarning";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -186,6 +190,19 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
   const [dropActive, setDropActive] = useState(false);
   const [showNewType, setShowNewType] = useState(false);
   const [newTypeInput, setNewTypeInput] = useState("");
+  const [dirty, setDirty] = useState(false);
+
+  useUnsavedChangesWarning(dirty);
+
+  // Сбрасываем dirty при открытии формы для другого проекта (или для нового).
+  useEffect(() => {
+    setDirty(false);
+  }, [project]);
+
+  const handleCancelClick = () => {
+    if (dirty && !confirmDiscard()) return;
+    onCancel();
+  };
 
   const validateImageFile = useCallback((file) => {
     if (!file.type.startsWith("image/")) {
@@ -207,7 +224,10 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
         else valid.push(file);
       }
       if (errors.length > 0) toast.error(errors[0]);
-      if (valid.length > 0) setImageFiles((prev) => [...prev, ...valid]);
+      if (valid.length > 0) {
+        setImageFiles((prev) => [...prev, ...valid]);
+        setDirty(true);
+      }
     },
     [validateImageFile]
   );
@@ -254,12 +274,14 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
     const s = scopeInput.trim();
     if (s && !form.scope.includes(s)) {
       setForm((f) => ({ ...f, scope: [...f.scope, s] }));
+      setDirty(true);
       setScopeInput("");
     }
   };
 
   const removeScope = (idx) => {
     setForm((f) => ({ ...f, scope: f.scope.filter((_, i) => i !== idx) }));
+    setDirty(true);
   };
 
   const removeExistingImage = (idx) => {
@@ -268,14 +290,17 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       ...f,
       images: f.images.filter((_, i) => i !== idx),
     }));
+    setDirty(true);
   };
 
   const removePendingFile = (idx) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== idx));
+    setDirty(true);
   };
 
   const setPendingFileAsMain = (idx) => {
     setPendingImagesFirst(true);
+    setDirty(true);
     if (idx === 0) return;
     setImageFiles((prev) => {
       const next = [...prev];
@@ -297,6 +322,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
 
   const setImageAsMain = (idx) => {
     setPendingImagesFirst(false);
+    setDirty(true);
     if (idx === 0) return;
     setExistingImages((prev) => {
       const next = [...prev];
@@ -318,10 +344,12 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       ...f,
       images: arrayMove(f.images || [], oldIndex, newIndex),
     }));
+    setDirty(true);
   }, []);
 
   const reorderPendingFiles = useCallback((oldIndex, newIndex) => {
     setImageFiles((prev) => arrayMove(prev, oldIndex, newIndex));
+    setDirty(true);
   }, []);
 
   const imageDragSensors = useSensors(
@@ -362,6 +390,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       }
       await refetch();
       setForm((f) => ({ ...f, type: name }));
+      setDirty(true);
       setNewTypeInput("");
       setShowNewType(false);
     } catch (error) {
@@ -520,17 +549,44 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
         savedProject = await pb
           .collection("projects")
           .update(project.recordId ?? project.id, updatePayload);
+
         if (newImageFiles.length > 0) {
+          // Файлы уже точно загружены на сервер этим update — чистим
+          // локальный imageFiles сразу, иначе повторное "Сохранить"
+          // задвоит фото, даже если ниже упадёт применение порядка.
+          setImageFiles([]);
+          setPendingImagesFirst(false);
+
           const orderedImageNames = getImageNamesAfterAppend(
             savedProject.images,
             existingImageNames,
             pendingImagesFirst,
           );
-          savedProject = await pb
-            .collection("projects")
-            .update(project.recordId ?? project.id, {
-              images: orderedImageNames,
-            });
+          try {
+            savedProject = await pb
+              .collection("projects")
+              .update(project.recordId ?? project.id, {
+                images: orderedImageNames,
+              });
+          } catch {
+            // Фото сохранены, но порядок применить не удалось — подтягиваем
+            // актуальное состояние с сервера, чтобы форма не разошлась с БД.
+            const fresh = await pb
+              .collection("projects")
+              .getOne(project.recordId ?? project.id)
+              .catch(() => savedProject);
+            const freshImageNames = Array.isArray(fresh.images) ? fresh.images : [];
+            setExistingImages(
+              freshImageNames
+                .map((name) => getPocketbaseFileUrl(fresh, name))
+                .filter(Boolean)
+            );
+            setForm((f) => ({ ...f, images: freshImageNames }));
+            toast.error(
+              "Фото загружены, но порядок применить не удалось. Данные обновлены с сервера — проверьте порядок фото и сохраните ещё раз."
+            );
+            return;
+          }
         }
       } else {
         if (newImageFiles.length > 0) {
@@ -551,6 +607,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       };
 
       toast.success(isEdit ? "Проект обновлен" : "Проект создан");
+      setDirty(false);
       onSave(mappedProject);
     } catch (err) {
       toast.error(err?.message ?? "Ошибка сохранения");
@@ -564,14 +621,18 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
   const labelClass = "mb-1 block text-sm text-gray-400";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      onChange={() => setDirty(true)}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between">
         <h2 className="font-play text-xl font-bold text-white">
           {isEdit ? "Редактировать проект" : "Новый проект"}
         </h2>
         <button
           type="button"
-          onClick={onCancel}
+          onClick={handleCancelClick}
           className="rounded-xl border border-brand/30 px-4 py-2 text-sm text-gray-400 hover:text-white"
         >
           Отмена
@@ -635,7 +696,10 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
           type="button"
           role="switch"
           aria-checked={form.published}
-          onClick={() => setForm((f) => ({ ...f, published: !f.published }))}
+          onClick={() => {
+            setForm((f) => ({ ...f, published: !f.published }));
+            setDirty(true);
+          }}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 ${
             form.published ? "border-brand bg-brand" : "border-gray-500 bg-ink"
           }`}
@@ -1342,7 +1406,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
         </button>
         <button
           type="button"
-          onClick={onCancel}
+          onClick={handleCancelClick}
           className="rounded-xl border border-brand/30 px-6 py-2.5 text-gray-400 hover:text-white"
         >
           Отмена

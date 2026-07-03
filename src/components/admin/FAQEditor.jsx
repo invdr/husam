@@ -93,12 +93,15 @@ export default function FAQEditor() {
     const bOrder = b.sort_order ?? next;
     setSaving(true);
     try {
-      await pb.collection("faq").update(a.id, { sort_order: bOrder });
-      await pb.collection("faq").update(b.id, { sort_order: aOrder });
+      await Promise.all([
+        pb.collection("faq").update(a.id, { sort_order: bOrder }),
+        pb.collection("faq").update(b.id, { sort_order: aOrder }),
+      ]);
       toast.success("Порядок обновлен");
       refetch();
     } catch (err) {
       toast.error(err?.message ?? "Ошибка");
+      await refetch();
     } finally {
       setSaving(false);
     }
