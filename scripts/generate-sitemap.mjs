@@ -19,6 +19,8 @@ const STATIC_ROUTES = [
   { path: "/", priority: "1.0" },
   { path: "/catalog", priority: "0.9" },
   { path: "/projects", priority: "0.9" },
+  { path: "/privacy", priority: "0.5" },
+  { path: "/consent", priority: "0.5" },
 ];
 
 async function fetchPublishedIds(collection) {

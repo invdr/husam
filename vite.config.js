@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     setupFiles: ["./vitest.setup.js"],
+    exclude: ["node_modules/**", "dist/**", "e2e/**"],
   },
   resolve: {
     alias: {

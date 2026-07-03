@@ -101,6 +101,13 @@ describe("ContactForm", () => {
     expect(openMessenger).toHaveBeenCalledWith(
       expect.stringContaining("Нужен срочный выезд"),
       undefined,
+      expect.objectContaining({
+        context: expect.objectContaining({
+          form: "Форма контактов",
+          service: "Дизайн",
+        }),
+        goal: "contact_form_submit",
+      }),
     );
   });
 });

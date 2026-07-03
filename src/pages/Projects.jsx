@@ -5,6 +5,7 @@ import { SaleProjectCard, SaleProjectCardSkeleton } from "@/components/sale";
 import SeoHead from "@/components/common/SeoHead";
 import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
 import { openMessenger } from "@/utils/messenger";
+import { GOALS } from "@/lib/analytics";
 import { useSaleProjects } from "@/hooks/useSaleProjects";
 import { useSaleProjectTypes } from "@/hooks/useSaleProjectTypes";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -562,6 +563,16 @@ export default function Projects() {
                       onRequestClick={(selectedProject) =>
                         openMessenger(
                           `Интересует готовый проект ${selectedProject.id} — "${selectedProject.title}"`,
+                          undefined,
+                          {
+                            goal: GOALS.PROJECT_CTA_CLICK,
+                            context: {
+                              form: "Карточка готового проекта",
+                              projectId: selectedProject.id,
+                              projectTitle: selectedProject.title,
+                              service: selectedProject.type,
+                            },
+                          },
                         )
                       }
                     />

@@ -85,7 +85,9 @@ export default function ProjectImage({ project, className = "" }) {
         src={images[currentImageIndex]}
         alt={`${project.title} - фото ${currentImageIndex + 1}`}
         className={className}
+        decoding="async"
         loading="lazy"
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
         onLoad={handleImageLoad}
         onError={() => {
           setImageError(true);

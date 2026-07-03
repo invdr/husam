@@ -11,6 +11,7 @@ import { openMessenger } from "@/utils/messenger";
 import { useProjects } from "@/hooks/useProjects";
 import { usePerView } from "@/hooks/usePerView";
 import { useLoading } from "@/contexts/LoadingContext";
+import { GOALS } from "@/lib/analytics";
 
 function ArrowCarousel({ items, onMore }) {
   const perView = usePerView();
@@ -125,6 +126,15 @@ function ArrowCarousel({ items, onMore }) {
                     onClick={() =>
                       openMessenger(
                         `Хочу проект ${project.id} — "${project.title}"`,
+                        undefined,
+                        {
+                          goal: GOALS.PROJECT_CTA_CLICK,
+                          context: {
+                            form: "Карточка портфолио",
+                            projectId: project.id,
+                            projectTitle: project.title,
+                          },
+                        },
                       )
                     }
                     className="flex-1 rounded-xl bg-brand px-3 py-2.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-ink hover:opacity-90 transition-opacity"

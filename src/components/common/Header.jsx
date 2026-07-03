@@ -4,6 +4,7 @@ import { telLink } from "@utils/messenger";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { GOALS, reachGoal } from "@/lib/analytics";
 import Icon from "./Icon";
 import logoImage from "@assets/logo.png";
 
@@ -164,6 +165,7 @@ export default function Header() {
                 )}
                 <a
                   href={telLink(phone)}
+                  onClick={() => reachGoal(GOALS.PHONE_CLICK)}
                   className="flex items-center rounded-xl border border-brand bg-brand px-4 py-2 text-sm text-ink transition hover:opacity-90"
                 >
                   <Icon name="phone" className="mr-2 h-4 w-4" /> {phone}
@@ -256,6 +258,7 @@ export default function Header() {
                 )}
                 <a
                   href={telLink(phone)}
+                  onClick={() => reachGoal(GOALS.PHONE_CLICK)}
                   className="w-full rounded-xl bg-brand px-4 py-3 text-center text-ink hover:opacity-90"
                 >
                   <Icon name="phone" className="mr-2 inline h-4 w-4" /> {phone}

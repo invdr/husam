@@ -1,3 +1,6 @@
+import { GOALS, reachGoal } from "@/lib/analytics";
+import { appendLeadContext } from "@/utils/leadContext";
+
 export const MESSENGER_PHONE = "+79289453131";
 
 export function phoneDigits(phone = MESSENGER_PHONE) {
@@ -12,6 +15,12 @@ export function messengerLink(phone, message = "") {
   return `https://wa.me/${phoneDigits(phone)}?text=${encodeURIComponent(message)}`;
 }
 
-export function openMessenger(message, phone = MESSENGER_PHONE) {
-  window.open(messengerLink(phone, message || ""), "_blank", "noopener");
+export function openMessenger(
+  message,
+  phone = MESSENGER_PHONE,
+  { context, goal = GOALS.MESSENGER_CLICK, goalParams } = {}
+) {
+  const messageWithContext = appendLeadContext(message || "", context);
+  reachGoal(goal, goalParams ?? context ?? {});
+  window.open(messengerLink(phone, messageWithContext), "_blank", "noopener");
 }

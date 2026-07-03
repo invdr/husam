@@ -12,6 +12,7 @@ import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
 import { getDisplayFields } from "@/utils/catalogAttributes";
 import { openMessenger } from "@/utils/messenger";
 import { useProjects } from "@/hooks/useProjects";
+import { GOALS, reachGoal } from "@/lib/analytics";
 
 function toAbsoluteImageUrl(url) {
   if (!url) return null;
@@ -44,6 +45,16 @@ export default function ProjectDetail() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [projectId]);
+
+  useEffect(() => {
+    if (!project) return;
+    reachGoal(GOALS.PROJECT_OPEN, {
+      projectId: project.id,
+      projectTitle: project.title,
+      projectType: project.type,
+      section: "catalog",
+    });
+  }, [project]);
 
   if (loading) {
     return (
@@ -183,6 +194,9 @@ export default function ProjectDetail() {
                     src={images[currentImageIndex]}
                     alt={`${project.title} — фото ${currentImageIndex + 1}`}
                     className="h-full w-full object-cover transition-opacity"
+                    decoding="async"
+                    fetchPriority="high"
+                    loading="eager"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-gray-500">
@@ -251,7 +265,13 @@ export default function ProjectDetail() {
                         i === currentImageIndex ? "border-brand" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
-                      <img src={img} alt="" className="h-full w-full object-cover" />
+                      <img
+                        src={img}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        decoding="async"
+                        loading="lazy"
+                      />
                     </button>
                   ))}
                 </div>
@@ -317,7 +337,19 @@ export default function ProjectDetail() {
               <div className="hidden flex-col gap-3 lg:flex">
                 <button
                   onClick={() =>
-                    openMessenger(`Интересует проект ${project.id} — "${project.title}"`)
+                    openMessenger(
+                      `Интересует проект ${project.id} — "${project.title}"`,
+                      undefined,
+                      {
+                        goal: GOALS.PROJECT_CTA_CLICK,
+                        context: {
+                          form: "Страница проекта",
+                          projectId: project.id,
+                          projectTitle: project.title,
+                          service: project.type,
+                        },
+                      },
+                    )
                   }
                   className="w-full rounded-xl bg-brand px-5 py-3.5 text-base font-medium text-ink transition-opacity hover:opacity-90"
                 >
@@ -325,7 +357,15 @@ export default function ProjectDetail() {
                 </button>
                 <button
                   onClick={() =>
-                    openMessenger(`Нужна консультация по проекту ${project.id}`)
+                    openMessenger(`Нужна консультация по проекту ${project.id}`, undefined, {
+                      goal: GOALS.PROJECT_CTA_CLICK,
+                      context: {
+                        form: "Вопрос по проекту",
+                        projectId: project.id,
+                        projectTitle: project.title,
+                        service: project.type,
+                      },
+                    })
                   }
                   className="w-full rounded-xl border-2 border-brand px-5 py-3.5 text-base font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                 >
@@ -376,7 +416,19 @@ export default function ProjectDetail() {
                 <div className="mt-6 flex flex-row gap-2 lg:hidden">
                   <button
                     onClick={() =>
-                      openMessenger(`Интересует проект ${project.id} — "${project.title}"`)
+                      openMessenger(
+                        `Интересует проект ${project.id} — "${project.title}"`,
+                        undefined,
+                        {
+                          goal: GOALS.PROJECT_CTA_CLICK,
+                          context: {
+                            form: "Страница проекта",
+                            projectId: project.id,
+                            projectTitle: project.title,
+                            service: project.type,
+                          },
+                        },
+                      )
                     }
                     className="flex-1 min-w-0 rounded-xl bg-brand px-3 py-2.5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
                   >
@@ -384,7 +436,15 @@ export default function ProjectDetail() {
                   </button>
                   <button
                     onClick={() =>
-                      openMessenger(`Нужна консультация по проекту ${project.id}`)
+                      openMessenger(`Нужна консультация по проекту ${project.id}`, undefined, {
+                        goal: GOALS.PROJECT_CTA_CLICK,
+                        context: {
+                          form: "Вопрос по проекту",
+                          projectId: project.id,
+                          projectTitle: project.title,
+                          service: project.type,
+                        },
+                      })
                     }
                     className="flex-1 min-w-0 rounded-xl border-2 border-brand px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                   >

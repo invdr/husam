@@ -2,6 +2,7 @@ import { useReducer } from "react";
 import { Badge, Card, CardContent } from "@/components/common";
 import { openMessenger } from "@/utils/messenger";
 import { phonePattern } from "@/utils/constants";
+import { GOALS } from "@/lib/analytics";
 import { useQuiz } from "@/hooks/useQuiz";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
 
@@ -12,6 +13,8 @@ const initialState = {
   nameError: false,
   phone: "",
   phoneError: false,
+  consent: false,
+  consentError: false,
 };
 
 function calculatorReducer(state, action) {
@@ -39,11 +42,14 @@ function calculatorReducer(state, action) {
       return { ...state, name: action.name, nameError: false };
     case "SET_PHONE":
       return { ...state, phone: action.phone, phoneError: false };
+    case "SET_CONSENT":
+      return { ...state, consent: action.consent, consentError: false };
     case "SET_CONTACT_ERRORS":
       return {
         ...state,
         nameError: action.nameError,
         phoneError: action.phoneError,
+        consentError: action.consentError,
       };
     default:
       return state;
@@ -101,12 +107,14 @@ export default function Calculator() {
     if (isContactStep) {
       const nameValid = isNameValid(state.name);
       const phoneValid = state.phone && phonePattern.test(state.phone);
+      const consentValid = state.consent;
       dispatch({
         type: "SET_CONTACT_ERRORS",
         nameError: !nameValid,
         phoneError: !phoneValid,
+        consentError: !consentValid,
       });
-      if (!nameValid || !phoneValid) return;
+      if (!nameValid || !phoneValid || !consentValid) return;
 
       const text = [
         "Здравствуйте! Заявка с сайта:",
@@ -122,7 +130,13 @@ export default function Calculator() {
       ]
         .filter(Boolean)
         .join("\n");
-      openMessenger(text);
+      openMessenger(text, undefined, {
+        goal: GOALS.QUIZ_SUBMIT,
+        context: {
+          form: "Квиз",
+          service: state.answers.type,
+        },
+      });
       // Мягкий reset после успешной отправки
       setTimeout(() => {
         resetQuiz();
@@ -141,6 +155,7 @@ export default function Calculator() {
         type: "SET_CONTACT_ERRORS",
         nameError: false,
         phoneError: false,
+        consentError: false,
       });
     }
   };
@@ -233,6 +248,40 @@ export default function Calculator() {
                       </p>
                     )}
                   </div>
+                  <div>
+                    <div className="flex items-start gap-2 text-xs text-gray-500">
+                      <input
+                        id="calculator-consent"
+                        type="checkbox"
+                        checked={state.consent}
+                        onChange={(e) => {
+                          dispatch({
+                            type: "SET_CONSENT",
+                            consent: e.target.checked,
+                          });
+                        }}
+                        className={`mt-1 ${
+                          state.consentError ? "form-error" : ""
+                        }`}
+                      />
+                      <label htmlFor="calculator-consent">
+                        Даю{" "}
+                        <a href="/consent" className="text-brand hover:underline">
+                          согласие на обработку персональных данных
+                        </a>{" "}
+                        и ознакомлен с{" "}
+                        <a href="/privacy" className="text-brand hover:underline">
+                          политикой обработки персональных данных
+                        </a>
+                        .
+                      </label>
+                    </div>
+                    {state.consentError && (
+                      <p className="mt-1 text-sm text-red-400">
+                        Подтвердите согласие перед отправкой
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -287,12 +336,6 @@ export default function Calculator() {
                   )}
                 </button>
               </div>
-
-              {isContactStep && (
-                <p className="mt-4 text-center text-xs text-gray-500">
-                  Нажимая кнопку, вы соглашаетесь с Политикой конфиденциальности
-                </p>
-              )}
             </CardContent>
           </Card>
         </div>

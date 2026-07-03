@@ -10,6 +10,7 @@ import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
 import { openMessenger } from "@/utils/messenger";
 import { useSaleProjects } from "@/hooks/useSaleProjects";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { GOALS, reachGoal } from "@/lib/analytics";
 import {
   formatPrice,
   getSaleDisplayFields,
@@ -42,6 +43,9 @@ function ProjectGallery({ images, projectTitle }) {
             src={images[currentImageIndex]}
             alt={`${projectTitle} — фото ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
+            decoding="async"
+            fetchPriority="high"
+            loading="eager"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-gray-500">
@@ -101,7 +105,13 @@ function ProjectGallery({ images, projectTitle }) {
                   : "border-transparent opacity-70 hover:opacity-100"
               }`}
             >
-              <img src={image} alt="" className="h-full w-full object-cover" />
+              <img
+                src={image}
+                alt=""
+                className="h-full w-full object-cover"
+                decoding="async"
+                loading="lazy"
+              />
             </button>
           ))}
         </div>
@@ -132,6 +142,16 @@ export default function ProjectSaleDetail() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [projectId]);
+
+  useEffect(() => {
+    if (!project) return;
+    reachGoal(GOALS.PROJECT_OPEN, {
+      projectId: project.id,
+      projectTitle: project.title,
+      projectType: project.type,
+      section: "projects",
+    });
+  }, [project]);
 
   if (loading) {
     return (
@@ -424,7 +444,17 @@ export default function ProjectSaleDetail() {
                   type="button"
                   onClick={() =>
                     openMessenger(
-                      `Хочу купить готовый проект ${project.id} — "${project.title}"`
+                      `Хочу купить готовый проект ${project.id} — "${project.title}"`,
+                      undefined,
+                      {
+                        goal: GOALS.PROJECT_CTA_CLICK,
+                        context: {
+                          form: "Страница готового проекта",
+                          projectId: project.id,
+                          projectTitle: project.title,
+                          service: project.type,
+                        },
+                      },
                     )
                   }
                   className="w-full rounded-xl bg-brand px-5 py-3.5 text-base font-medium text-ink transition-opacity hover:opacity-90"
@@ -434,7 +464,15 @@ export default function ProjectSaleDetail() {
                 <button
                   type="button"
                   onClick={() =>
-                    openMessenger(`Нужна консультация по проекту ${project.id}`)
+                    openMessenger(`Нужна консультация по проекту ${project.id}`, undefined, {
+                      goal: GOALS.PROJECT_CTA_CLICK,
+                      context: {
+                        form: "Вопрос по готовому проекту",
+                        projectId: project.id,
+                        projectTitle: project.title,
+                        service: project.type,
+                      },
+                    })
                   }
                   className="w-full rounded-xl border-2 border-brand px-5 py-3.5 text-base font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                 >

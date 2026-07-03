@@ -9,6 +9,7 @@
   - коллекции данных (`projects`, `sale_projects`, `faq`, `site_settings`, `page_content`, `*_types`);
   - файловое хранилище (поля `images`);
   - auth для админки через коллекцию `admins`.
+- **Яндекс.Метрика** — опциональная аналитика через `VITE_YANDEX_METRIKA_ID`.
 
 ## Данные и API
 
@@ -44,6 +45,9 @@
 ## Основные UX-функции
 
 - Интеграция форм с мессенджером сохранена.
+- Перед открытием заявки текст дополняется контекстом источника: URL страницы, форма/проект и UTM-метки.
+- Юридические страницы `/privacy` и `/consent` подключены как обычные React Router routes.
+- `AnalyticsBridge` и `src/lib/analytics.js` отвечают за инициализацию Метрики, SPA-хиты и цели.
 - Анимации и визуальные хуки (`useReveal`, `useCountUp`) не зависят от backend.
 - В админке работают:
   - create/update/delete;
@@ -54,7 +58,10 @@
 
 - Для frontend нужен только:
   - `VITE_POCKETBASE_URL=https://api.husam.ru`
+- Для аналитики:
+  - `VITE_YANDEX_METRIKA_ID=<номер счетчика>`
 - Frontend остается статическим (`dist/`), backend живет отдельно на VPS (`api.husam.ru`).
+- После `npm run build` запускается `scripts/generate-sitemap.mjs`, который пишет `dist/sitemap.xml` и добавляет детальные страницы из PocketBase при доступном API.
 
 ## Источник истины по миграции
 

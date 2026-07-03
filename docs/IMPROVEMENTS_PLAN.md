@@ -102,12 +102,23 @@
 - [x] Удалить или архивировать `src/data/portfolio.js`
 
 ### 6.2 Тесты
-- [ ] Unit-тесты для useProjects (mock PocketBase)
-- [ ] Тесты для ProjectForm (валидация, submit)
+- [x] Unit-тесты для useProjects (mock PocketBase)
+- [x] Тесты для ProjectForm (валидация, submit)
+- [x] Playwright smoke-тесты для главной, юридических страниц и согласий в формах
 
 ### 6.3 Документация ✅
 - [x] Обновить README — стек, PocketBase, env, деплой
 - [x] Добавить ссылки на ARCHITECTURE.md и POCKETBASE_MIGRATION_PLAN.md
+
+### 6.4 Аналитика и источники заявок ✅
+- [x] Добавить Яндекс.Метрику через `VITE_YANDEX_METRIKA_ID`
+- [x] Добавить цели для звонков, форм, квиза и CTA проектов
+- [x] Добавлять URL страницы и UTM-метки в текст заявки
+
+### 6.5 Производительность и SEO ✅
+- [x] Перевести Google Fonts на локальные `woff2`
+- [x] Подключить postbuild-генерацию sitemap с детальными страницами PocketBase
+- [x] Улучшить загрузку hero-изображения и галерей
 
 ---
 

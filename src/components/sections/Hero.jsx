@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
 import { Badge, Icon, Modal } from "@/components/common";
 import EditBlockButton from "./EditBlockButton";
@@ -63,26 +64,34 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden min-h-[calc(100vh-5rem)] flex flex-col justify-between py-12 md:py-20 lg:py-32 will-reveal">
+      <Helmet>
+        <link
+          rel="preload"
+          as="image"
+          href={heroImageMobile}
+          media="(max-width: 767px)"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href={heroImage}
+          media="(min-width: 768px)"
+        />
+      </Helmet>
       <EditBlockButton onClick={openEdit} label="Изменить блок" />
 
-      {/* Мобильное фоновое изображение */}
-      <div
-        className="absolute inset-0 md:hidden"
-        style={{
-          backgroundImage: `url('${heroImageMobile}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
-      {/* Десктопное фоновое изображение */}
-      <div
-        className="absolute inset-0 hidden md:block"
-        style={{
-          backgroundImage: `url('${heroImage}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+      <picture className="absolute inset-0 block">
+        <source media="(max-width: 767px)" srcSet={heroImageMobile} />
+        <img
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-cover"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+        />
+      </picture>
       <div className="absolute inset-0 bg-black/35" />
       <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent" />
 

@@ -1,4 +1,5 @@
 import { Typewriter } from "@/components/ui/Typewriter";
+import { GOALS, reachGoal } from "@/lib/analytics";
 
 export default function Footer() {
   // Обработчик плавной прокрутки к якорю
@@ -39,6 +40,7 @@ export default function Footer() {
               <li>
                 <a
                   href="tel:+79289453131"
+                  onClick={() => reachGoal(GOALS.PHONE_CLICK)}
                   className="hover:text-brand transition"
                 >
                   +7 (928) 945-31-31
@@ -108,9 +110,18 @@ export default function Footer() {
             <h4 className="font-play text-lg font-bold mb-4 text-white">
               Документы
             </h4>
-            <p className="max-w-xs text-sm text-gray-300">
-              Юридические документы предоставляются по запросу.
-            </p>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li>
+                <a href="/privacy" className="hover:text-brand transition">
+                  Политика обработки персональных данных
+                </a>
+              </li>
+              <li>
+                <a href="/consent" className="hover:text-brand transition">
+                  Согласие на обработку персональных данных
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -136,8 +147,10 @@ export default function Footer() {
               />
             </a>
             <div className="text-xs text-gray-500">
-              Работая с сайтом, вы соглашаетесь с нашей{" "}
-              политикой конфиденциальности
+              Работая с сайтом, вы можете ознакомиться с{" "}
+              <a href="/privacy" className="text-gray-400 hover:text-brand">
+                политикой обработки персональных данных
+              </a>
               .
             </div>
           </div>

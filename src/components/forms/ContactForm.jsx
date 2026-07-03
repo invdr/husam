@@ -7,6 +7,7 @@ import {
 } from "@/components/common";
 import { openMessenger } from "@/utils/messenger";
 import { phonePattern } from "@/utils/constants";
+import { GOALS } from "@/lib/analytics";
 
 export default function ContactForm({ phone }) {
   const handleSubmit = (e) => {
@@ -39,6 +40,13 @@ export default function ContactForm({ phone }) {
         comment || ""
       }`,
       phone,
+      {
+        goal: GOALS.CONTACT_FORM_SUBMIT,
+        context: {
+          form: "Форма контактов",
+          service,
+        },
+      },
     );
   };
 
@@ -80,10 +88,25 @@ export default function ContactForm({ phone }) {
             placeholder="Комментарий"
             className="min-h-[92px] w-full rounded-xl border border-brand/20 bg-ink px-4 py-3 text-white outline-none focus:border-brand"
           ></textarea>
-          <label className="flex items-start gap-2 text-xs text-gray-500">
-            <input type="checkbox" required className="mt-1" /> Согласен с Политикой
-            конфиденциальности
-          </label>
+          <div className="flex items-start gap-2 text-xs text-gray-500">
+            <input
+              id="contact-consent"
+              type="checkbox"
+              required
+              className="mt-1"
+            />
+            <label htmlFor="contact-consent">
+              Даю{" "}
+              <a href="/consent" className="text-brand hover:underline">
+                согласие на обработку персональных данных
+              </a>{" "}
+              и ознакомлен с{" "}
+              <a href="/privacy" className="text-brand hover:underline">
+                политикой обработки персональных данных
+              </a>
+              .
+            </label>
+          </div>
           <button className="w-full rounded-xl bg-brand py-4 text-ink transition hover:opacity-90">
             Отправить заявку в мессенджер
           </button>

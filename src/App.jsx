@@ -10,6 +10,7 @@ import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import SeoHead from "@/components/common/SeoHead";
 import { LocalBusinessJsonLd, OrganizationJsonLd } from "@/components/common/JsonLd";
+import AnalyticsBridge from "@/components/common/AnalyticsBridge";
 import PageLoader from "@/components/common/PageLoader";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import ScrollRestoration from "@/components/common/ScrollRestoration";
@@ -32,6 +33,8 @@ import Catalog from "@/pages/Catalog";
 import ProjectDetail from "@/pages/ProjectDetail";
 import Projects from "@/pages/Projects";
 import ProjectSaleDetail from "@/pages/ProjectSaleDetail";
+import LegalDocument from "@/pages/LegalDocument";
+import { CONSENT_DOCUMENT, POLICY_DOCUMENT } from "@/data/legalDocuments";
 
 // Админ-панель (lazy)
 const Admin = lazy(() => import("@/pages/Admin"));
@@ -120,6 +123,7 @@ function App() {
       >
         <div className="min-h-screen w-full bg-ink text-white">
           <ScrollRestoration />
+          <AnalyticsBridge />
           <Header />
           <main className="flex-1">
             <Suspense fallback={<AdminLoader />}>
@@ -129,6 +133,14 @@ function App() {
                 <Route path="/projects/:projectId" element={<ProjectSaleDetail />} />
                 <Route path="/catalog" element={<Catalog />} />
                 <Route path="/catalog/:projectId" element={<ProjectDetail />} />
+                <Route
+                  path="/privacy"
+                  element={<LegalDocument document={POLICY_DOCUMENT} />}
+                />
+                <Route
+                  path="/consent"
+                  element={<LegalDocument document={CONSENT_DOCUMENT} />}
+                />
                 <Route
                   path="/admin"
                   element={
