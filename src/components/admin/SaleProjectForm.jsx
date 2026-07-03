@@ -18,6 +18,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Icon from "@/components/common/Icon";
+import {
+  getImageNamesAfterAppend,
+} from "@/components/admin/projectImageReorder";
 import { useSaleProjectTypes } from "@/hooks/useSaleProjectTypes";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import SaleProjectCustomFieldsEditor from "@/components/admin/SaleProjectCustomFieldsEditor";
@@ -32,7 +35,10 @@ import {
   normalizePlotAreaField,
   normalizeSquareField,
 } from "@/utils/saleProjectFieldNormalize";
-import { pickExplicationAndFacetsForSaleProjectForm } from "@/utils/saleProjectAdminFormBinding";
+import {
+  pickExplicationAndFacetsForSaleProjectForm,
+  syncImportedStructuredSaleProjectAttributes,
+} from "@/utils/saleProjectAdminFormBinding";
 import { resizeImage } from "@/utils/imageResize";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -177,6 +183,7 @@ export default function SaleProjectForm({
   });
   const [customFields, setCustomFields] = useState({});
   const [imageFiles, setImageFiles] = useState([]);
+  const [pendingImagesFirst, setPendingImagesFirst] = useState(false);
   const [pendingPreviewUrls, setPendingPreviewUrls] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -211,6 +218,7 @@ export default function SaleProjectForm({
   };
 
   const setPendingFileAsMain = (idx) => {
+    setPendingImagesFirst(true);
     if (idx === 0) return;
     setImageFiles((prev) => {
       const next = [...prev];
@@ -263,6 +271,10 @@ export default function SaleProjectForm({
     setPendingPreviewUrls(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [imageFiles]);
+
+  useEffect(() => {
+    if (imageFiles.length === 0) setPendingImagesFirst(false);
+  }, [imageFiles.length]);
 
   useEffect(() => {
     setForm((prev) => {
@@ -347,6 +359,7 @@ export default function SaleProjectForm({
   };
 
   const setImageAsMain = (idx) => {
+    setPendingImagesFirst(false);
     if (idx === 0) return;
     setExistingImages((prev) => {
       const next = [...prev];
@@ -489,7 +502,20 @@ export default function SaleProjectForm({
         sortOrderInCategory = (existing?.sort_order_in_category ?? -1) + 1;
       }
 
-      const existingAttrs = (project?.attributes && typeof project.attributes === "object") ? project.attributes : {};
+      const originalFacets = pickExplicationAndFacetsForSaleProjectForm(project);
+      const roomExplanationChanged =
+        isEdit &&
+        roomExplanation !== String(originalFacets.room_explanation ?? "").trim();
+      const existingAttrs = syncImportedStructuredSaleProjectAttributes(
+        project?.attributes,
+        material || null,
+        {
+          hasGarage: !!form.has_garage,
+          hasCanopy: !!form.has_canopy,
+          hasBasement: !!form.has_basement,
+          roomExplanationChanged,
+        },
+      );
       const normalizedPlotArea = (form.plot_area ?? "").trim()
         ? normalizePlotAreaField(form.plot_area)
         : null;
@@ -551,6 +577,18 @@ export default function SaleProjectForm({
         savedProject = await pb
           .collection("sale_projects")
           .update(project.recordId ?? project.id, updatePayload);
+        if (newImageFiles.length > 0) {
+          const orderedImageNames = getImageNamesAfterAppend(
+            savedProject.images,
+            existingImageNames,
+            pendingImagesFirst,
+          );
+          savedProject = await pb
+            .collection("sale_projects")
+            .update(project.recordId ?? project.id, {
+              images: orderedImageNames,
+            });
+        }
       } else {
         if (newImageFiles.length > 0) {
           row.images = newImageFiles;
@@ -1154,7 +1192,7 @@ export default function SaleProjectForm({
                         idx === 0 ? "ring-2 ring-brand" : ""
                       }`}
                     />
-                    {idx === 0 ? (
+                    {idx === 0 && !pendingImagesFirst ? (
                       <span className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink z-20 pointer-events-none">
                         Главная
                       </span>
@@ -1236,7 +1274,7 @@ export default function SaleProjectForm({
                         <Icon name="image-plus" className="h-8 w-8" />
                       </div>
                     )}
-                    {idx === 0 ? (
+                    {idx === 0 && (existingImages.length === 0 || pendingImagesFirst) ? (
                       <span className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink z-20 pointer-events-none">
                         Главная
                       </span>

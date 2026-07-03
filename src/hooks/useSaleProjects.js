@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
+import {
+  isPocketbaseAbortError,
+  subscribeToPocketbaseCollections,
+} from "@/hooks/pocketbaseRealtime";
 
 function pickText(...values) {
   for (const value of values) {
@@ -19,6 +23,15 @@ export function normalizeSaleProject(row) {
 
   const attributes =
     row.attributes && typeof row.attributes === "object" ? row.attributes : {};
+  const constructionMaterials =
+    attributes.constructionMaterials &&
+    typeof attributes.constructionMaterials === "object"
+      ? attributes.constructionMaterials
+      : {};
+  const explication =
+    attributes.explication && typeof attributes.explication === "object"
+      ? attributes.explication
+      : {};
 
   return {
     id: row.external_id ?? row.id,
@@ -44,6 +57,17 @@ export function normalizeSaleProject(row) {
     featured: !!row.featured,
     published: row.published !== false,
     attributes,
+    constructionMaterials,
+    explication,
+    style: pickText(attributes.style),
+    garage: pickText(attributes.garage),
+    canopy: pickText(attributes.canopy),
+    basement: pickText(attributes.basement),
+    bedrooms: pickText(attributes.bedrooms),
+    terrace: pickText(attributes.terrace),
+    total_built_area: pickText(attributes.total_built_area),
+    print_price: pickText(attributes.print_price),
+    discount: pickText(attributes.discount),
     plot_area: pickText(row.plot_area, attributes.plot_area),
     house_area: pickText(row.house_area, attributes.house_area),
     usable_area: pickText(row.usable_area, attributes.usable_area),
@@ -95,7 +119,7 @@ export function useSaleProjects() {
       setProjects(normalized);
       setError(null);
     } catch (err) {
-      if (err?.isAbort || /autocancelled|aborted|cancell?ed/i.test(err?.message || "")) {
+      if (isPocketbaseAbortError(err)) {
         return;
       }
       setError(err);
@@ -113,13 +137,24 @@ export function useSaleProjects() {
       await fetchProjects(true);
       if (cancelled) return;
 
-      const unsubscribe = await pb.collection("sale_projects").subscribe("*", () => {
-        if (!cancelled) fetchProjects(false);
-      });
+      const unsubscribe = await subscribeToPocketbaseCollections(
+        ["sale_projects", "sale_project_types"],
+        () => {
+          if (!cancelled) fetchProjects(false);
+        }
+      );
+      if (cancelled) {
+        unsubscribe();
+        return;
+      }
       removeChannel = () => {
         unsubscribe();
       };
-    })();
+    })().catch((err) => {
+      if (!cancelled && !isPocketbaseAbortError(err)) {
+        setError(err);
+      }
+    });
 
     return () => {
       cancelled = true;

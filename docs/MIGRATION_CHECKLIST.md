@@ -160,7 +160,7 @@
 
 - [🤖] Вынесен хук `useReveal` в `src/hooks/useReveal.js`
 - [🤖] Вынесен хук `useCountUp` в `src/hooks/useCountUp.js`
-- [🤖] Вынесены WhatsApp утилиты в `src/utils/whatsapp.js`
+- [🤖] Вынесены мессенджер утилиты в `src/utils/messenger.js`
 - [🤖] Вынесена валидация форм в `src/utils/validation.js`
 - [🤖] Создан `src/utils/constants.js` с константами
 - [🤖] Проверена работоспособность всей логики

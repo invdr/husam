@@ -39,59 +39,62 @@ const STATUS_ALIASES = new Map([
 /** Колонки CSV совпадают с полями формы создания готового проекта (SaleProjectForm). */
 export const HEADER_MAP = new Map(
   [
-    ["id", ["id", "артикул", "артикул (id)", "код", "sku"]],
-    ["title", ["title", "название", "имя", "наименование"]],
-    ["description", ["description", "описание", "описание проекта"]],
+    ["id", ["id", "Артикул", "Артикул (ID)", "Код", "SKU"]],
+    ["title", ["title", "Название", "Имя", "Наименование"]],
+    ["description", ["description", "Описание", "Описание проекта"]],
+    ["room_explanation", ["room_explanation", "Экспликация", "Экспликация проекта", "Поэтажка"]],
+    ["has_garage", ["has_garage", "Гараж", "Есть гараж"]],
+    ["has_canopy", ["has_canopy", "Навес", "Есть навес"]],
+    ["has_basement", ["has_basement", "Подвал", "Есть подвал", "Цоколь"]],
+    ["type", ["type", "Категория", "Тип", "Раздел"]],
+    ["area", ["area", "Площадь"]],
+    ["rooms", ["rooms", "Комнаты", "Кол-во комнат", "Количество комнат"]],
+    ["floors", ["floors", "Этажей", "Этажи", "Кол-во этажей", "Количество этажей"]],
+    ["material", ["material", "Материал"]],
+    ["style", ["style", "Стиль"]],
+    ["terrace", ["terrace", "Терраса"]],
+    ["bedrooms", ["bedrooms", "Спальни", "Кол-во спален", "Количество спален"]],
     [
-      "room_explanation",
-      ["room_explanation", "экспликация", "экспликация проекта", "поэтажка"],
+      "explication_basement",
+      [
+        "Экспликация: подвал",
+        "Экспликация подвал",
+        "Экспликация/Подвал",
+        "Подвал экспликация",
+        "Подвал (экспликация)",
+      ],
     ],
-    ["has_garage", ["has_garage", "гараж", "есть гараж"]],
-    ["has_canopy", ["has_canopy", "навес", "есть навес"]],
-    ["has_basement", ["has_basement", "подвал", "есть подвал", "цоколь"]],
-    ["type", ["type", "категория", "тип", "раздел"]],
-    ["area", ["area", "площадь"]],
-    ["rooms", ["rooms", "комнаты", "кол-во комнат", "количество комнат"]],
-    ["floors", ["floors", "этажей", "этажи"]],
-    ["material", ["material", "материал"]],
-    ["price", ["price", "цена"]],
-    [
-      "old_price",
-      ["old_price", "oldprice", "old price", "старая цена", "старая_цена"],
-    ],
+    ["explication_floor_1", ["Экспликация: 1 этаж", "Экспликация 1й этаж", "Экспликация 1 этаж", "1й этаж", "1 этаж", "Первый этаж"]],
+    ["explication_floor_2", ["Экспликация: 2 этаж", "Экспликация 2й этаж", "Экспликация 2 этаж", "2й этаж", "2 этаж", "Второй этаж"]],
+    ["material_foundation", ["Тип фундамента", "Фундамент"]],
+    ["material_walls", ["Стены", "Материал стен", "Стеновой материал"]],
+    ["material_roof", ["Кровля", "Материал кровли"]],
+    ["material_facade", ["Облицовка фасада", "Фасад", "Материал фасада"]],
+    ["material_summary", ["Общий", "Материалы: общий", "Материалы общий", "Общие материалы"]],
+    ["total_built_area", ["Площадь всех построек", "Площадь всех построек для расчета стоимости проекта"]],
+    ["discount", ["Скидка"]],
+    ["discounted_price", ["Цена со скидкой"]],
+    ["print_price", ["Цена за распечатку"]],
+    ["site_status", ["Перенесен на сайт", "Статус сайта"]],
+    ["source_photo_url", ["Ссылка на фотографиями", "Ссылка на фотографии", "Ссылка на фото"]],
+    ["note", ["Примечание", "Комментарий"]],
+    ["price", ["price", "Цена"]],
+    ["old_price", ["old_price", "oldprice", "old price", "Старая цена", "Старая_цена", "Стоимость проекта"]],
     [
       "construction_price_from",
-      [
-        "construction_price_from",
-        "стоимость строительства от",
-        "строительство от",
-        "цена строительства",
-      ],
+      ["construction_price_from", "Стоимость строительства от", "Строительство от", "Цена строительства"],
     ],
-    ["status", ["status", "статус"]],
-    ["published", ["published", "опубликован", "публикация", "видимость"]],
-    ["featured", ["featured", "на главной", "главная", "в избранном"]],
-    [
-      "images",
-      ["images", "image", "изображения", "картинки", "фото", "urls", "url"],
-    ],
-    ["plot_area", ["plot_area", "площадь участка", "участок"]],
-    ["house_area", ["house_area", "площадь дома", "дом"]],
-    ["usable_area", ["usable_area", "полезная площадь"]],
-    [
-      "implementation_period",
-      ["implementation_period", "срок реализации", "срок", "период реализации"],
-    ],
+    ["status", ["status", "Статус"]],
+    ["published", ["published", "Опубликован", "Публикация", "Видимость"]],
+    ["featured", ["featured", "На главной", "Главная", "В избранном"]],
+    ["images", ["images", "image", "Изображения", "Картинки", "Фото", "URLs", "URL"]],
+    ["plot_area", ["plot_area", "Площадь участка", "Участок"]],
+    ["house_area", ["house_area", "Площадь дома", "Дом", "Общая площадь дома"]],
+    ["usable_area", ["usable_area", "Полезная площадь"]],
+    ["implementation_period", ["implementation_period", "Срок реализации", "Срок", "Период реализации"]],
     [
       "house_dimensions",
-      [
-        "house_dimensions",
-        "общие размеры",
-        "общие размеры дома",
-        "размеры дома",
-        "размеры",
-        "габариты",
-      ],
+      ["house_dimensions", "Общие размеры", "Общие размеры дома", "Размеры дома", "Размеры", "Габариты"],
     ],
   ].flatMap(([key, aliases]) => aliases.map((a) => [normalizeKey(a), key])),
 );
@@ -114,10 +117,19 @@ export function asTrimmedString(value) {
 function parseBoolean(value) {
   const raw = normalizeKey(value);
   if (!raw) return undefined;
-  if (["1", "true", "yes", "y", "да", "on", "вкл"].includes(raw)) return true;
-  if (["0", "false", "no", "n", "нет", "off", "выкл"].includes(raw))
+  if (["1", "true", "yes", "y", "\u0434\u0430", "on", "\u0432\u043a\u043b", "\u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d"].includes(raw)) return true;
+  if (["0", "false", "no", "n", "\u043d\u0435\u0442", "off", "\u0432\u044b\u043a\u043b", "\u0436\u0434\u0435\u0442 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438", "\u0436\u0434\u0451\u0442 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438"].includes(raw)) {
     return false;
+  }
   return undefined;
+}
+
+function parseFeatureBoolean(value) {
+  const parsed = parseBoolean(value);
+  if (parsed !== undefined) return parsed;
+  const raw = normalizeKey(value);
+  if (!raw || raw === "-") return false;
+  return true;
 }
 
 function splitImages(value) {
@@ -130,6 +142,48 @@ function splitImages(value) {
   return parts.length ? parts : null;
 }
 
+function buildStructuredExplication(mappedRow) {
+  const sections = {
+    basement: asTrimmedString(mappedRow.explication_basement) || null,
+    floor_1: asTrimmedString(mappedRow.explication_floor_1) || null,
+    floor_2: asTrimmedString(mappedRow.explication_floor_2) || null,
+  };
+  return Object.values(sections).some(Boolean) ? sections : null;
+}
+
+function formatExplicationSection(title, value) {
+  const text = asTrimmedString(value);
+  return text ? `${title}\n${text}` : "";
+}
+
+function buildRoomExplanation(mappedRow) {
+  const legacy = asTrimmedString(mappedRow.room_explanation);
+  if (legacy) return legacy;
+  return [
+    formatExplicationSection("Подвал", mappedRow.explication_basement),
+    formatExplicationSection("1 этаж", mappedRow.explication_floor_1),
+    formatExplicationSection("2 этаж", mappedRow.explication_floor_2),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function buildMaterials(mappedRow) {
+  const materials = {
+    foundation: asTrimmedString(mappedRow.material_foundation) || null,
+    walls: asTrimmedString(mappedRow.material_walls) || null,
+    roof: asTrimmedString(mappedRow.material_roof) || null,
+    facade: asTrimmedString(mappedRow.material_facade) || null,
+    summary: asTrimmedString(mappedRow.material_summary) || null,
+  };
+  return Object.values(materials).some(Boolean) ? materials : null;
+}
+
+function toComparableFloorCount(value) {
+  const match = asTrimmedString(value).match(/\d+/);
+  return match ? Number.parseInt(match[0], 10) : 0;
+}
+
 function normalizeStatus(value) {
   const raw = normalizeKey(value);
   if (!raw) return "";
@@ -139,79 +193,103 @@ function normalizeStatus(value) {
 export const CSV_RU_HEADERS = [
   "Артикул",
   "Название",
+  "Стиль",
   "Описание",
-  "Экспликация",
-  "Есть гараж",
-  "Есть навес",
-  "Есть подвал",
-  "Категория",
-  "Комнаты",
-  "Этажи",
-  "Материал",
-  "Площадь дома",
-  "Цена",
-  "Старая цена",
-  "Стоимость строительства от",
-  "Статус",
-  "Опубликован",
-  "На главной",
-  "Изображения",
+  "Общие размеры дома",
+  "Экспликация: подвал",
+  "Экспликация: 1 этаж",
+  "Экспликация: 2 этаж",
+  "Гараж",
+  "Навес",
+  "Терраса",
+  "Подвал",
+  "Кол-во спален",
+  "Кол-во этажей",
+  "Тип фундамента",
+  "Стены",
+  "Кровля",
+  "Облицовка фасада",
+  "Материалы: общий",
   "Площадь участка",
   "Полезная площадь",
-  "Общие размеры дома",
-  "Срок реализации",
+  "Общая площадь дома",
+  "Площадь всех построек",
+  "Стоимость проекта",
+  "Скидка",
+  "Цена со скидкой",
+  "Цена за распечатку",
+  "Перенесен на сайт",
+  "На главной",
+  "Ссылка на фотографии",
+  "Примечание",
 ];
 
 export const CSV_RU_HINTS = [
-  "Уникальный код проекта (например SP-001)",
-  "Название объекта для отображения на сайте",
-  "Краткое описание (как в форме)",
-  "Комната — площадь, по строкам; можно через \\n",
+  "Уникальный код проекта, например V-117-N",
+  "Название проекта",
+  "Архитектурный стиль",
+  "Краткое описание",
+  "Например 19,5х11 м",
+  "Помещения подвала, можно несколько строк",
+  "Помещения 1 этажа, можно несколько строк",
+  "Помещения 2 этажа, если есть",
+  "Нет / Пристроенный / Отдельностоящий",
+  "Нет / Пристроенный / Отдельностоящий",
   "Да / Нет",
   "Да / Нет",
-  "Да / Нет",
-  "Раздел: Дом, Участок и т.д. (новые создаются автоматически)",
-  "Количество комнат",
+  "Количество спален",
   "Количество этажей",
-  "Материал стен (газоблок, кирпич и т.д.)",
-  "Только число — м² подставится автоматически (как «Площадь дома» в форме)",
-  "Цена в рублях",
-  "Старая цена (зачеркнутая), руб",
-  "Текст для блока «Стоимость строительства от …»",
-  "В наличии / Под заказ",
-  "Да или Нет — показывать на сайте",
-  "Да или Нет — вывести на главную",
-  "Ссылки на фото через | или ;",
-  "Например 6 соток или число — м² подставится при числе",
-  "Только число — м² подставится автоматически",
-  "Например 12,6м х 14,6м",
-  "Срок реализации (например 6 месяцев)",
+  "Например Ленточный",
+  "Материал стен, используется как основной материал/фильтр",
+  "Например Металлочерепица",
+  "Например Облицовочный кирпич",
+  "Краткое описание материалов одной строкой",
+  "Например 6 соток или 600",
+  "Только число или значение с м²",
+  "Только число или значение с м²",
+  "Площадь всех построек для расчета стоимости",
+  "Старая/полная цена проекта",
+  "Например 55%",
+  "Основная цена на сайте",
+  "Цена печатной версии, если есть",
+  "Опубликован / Ждет публикации",
+  "Да / Нет",
+  "Ссылки через | или ;",
+  "Внутренний комментарий",
 ];
 
 export const CSV_EXAMPLE_ROW = [
-  "SP-001",
-  "Дом 120",
-  "Одноэтажный дом с террасой",
-  "Кухня — 18 м²\nГостиная — 32 м²",
+  "V-117-N",
+  "Дом площадью: 117м2 в стиле современная классика",
+  "Современная классика",
+  "Одноэтажный дом с навесом",
+  "19,5х11 м",
+  "",
+  "1. Спальня - 15,20 кв.м.;\n2. Ванная - 4,60 кв.м.;",
+  "",
   "Нет",
-  "Да",
+  "Пристроенный",
   "Нет",
-  "Дом",
-  "3",
+  "Нет",
   "2",
-  "Газоблок",
-  "120",
-  "5900000",
-  "6400000",
-  "15 000 000",
-  "В наличии",
-  "Да",
+  "1",
+  "Ж/Б плита",
+  "Газобетонные блоки",
+  "Металлопрофиль",
+  "Декоративная штукатурка",
+  "Тип фундамента: Ж/Б плита; Стены: Газобетонные блоки; Кровля: Металлопрофиль;",
+  "-",
+  "117",
+  "149",
+  "149",
+  "59 600₽",
+  "47%",
+  "31 500₽",
+  "",
+  "Опубликован",
   "Нет",
   "https://example.com/1.jpg|https://example.com/2.jpg",
-  "6 соток",
-  "95",
-  "12,6м х 14,6м",
-  "6 месяцев",
+  "",
 ];
 
 export function buildCsvTemplate() {
@@ -269,19 +347,27 @@ export function validateRow(mappedRow, rowIndex1, seenIds) {
     errors.push(`Описание не длиннее ${LIMITS.description}`);
   }
 
-  const room_explanation = asTrimmedString(mappedRow.room_explanation);
+  const room_explanation = buildRoomExplanation(mappedRow);
   if (room_explanation.length > LIMITS.room_explanation) {
     errors.push(`Экспликация не длиннее ${LIMITS.room_explanation}`);
   }
 
-  const type = asTrimmedString(mappedRow.type);
+  const floorsForType = asTrimmedString(mappedRow.floors);
+  const type =
+    asTrimmedString(mappedRow.type) ||
+    (toComparableFloorCount(floorsForType) > 1
+      ? "Двухэтажные проекты"
+      : floorsForType
+        ? "Одноэтажные проекты"
+        : "");
   if (!type) errors.push("Категория (type) обязательна");
 
   const houseAreaSource =
     asTrimmedString(mappedRow.house_area) || asTrimmedString(mappedRow.area);
-  const rooms = asTrimmedString(mappedRow.rooms);
-  const floors = asTrimmedString(mappedRow.floors);
-  const material = asTrimmedString(mappedRow.material);
+  const rooms = asTrimmedString(mappedRow.rooms) || asTrimmedString(mappedRow.bedrooms);
+  const floors = floorsForType;
+  const material =
+    asTrimmedString(mappedRow.material) || asTrimmedString(mappedRow.material_walls);
 
   if (houseAreaSource.length > LIMITS.area) {
     errors.push(`Площадь дома не длиннее ${LIMITS.area}`);
@@ -299,16 +385,18 @@ export function validateRow(mappedRow, rowIndex1, seenIds) {
     errors.push("Статус: В наличии или Под заказ");
   }
 
-  const published = parseBoolean(mappedRow.published);
+  const published =
+    parseBoolean(mappedRow.published) ?? parseBoolean(mappedRow.site_status);
   const featured = parseBoolean(mappedRow.featured);
 
-  const has_garage = parseBoolean(mappedRow.has_garage) ?? false;
-  const has_canopy = parseBoolean(mappedRow.has_canopy) ?? false;
-  const has_basement = parseBoolean(mappedRow.has_basement) ?? false;
+  const has_garage = parseFeatureBoolean(mappedRow.has_garage);
+  const has_canopy = parseFeatureBoolean(mappedRow.has_canopy);
+  const has_basement = parseFeatureBoolean(mappedRow.has_basement);
 
-  const images = splitImages(mappedRow.images);
+  const images = splitImages(mappedRow.images) ?? splitImages(mappedRow.source_photo_url);
 
-  const price = asTrimmedString(mappedRow.price);
+  const price =
+    asTrimmedString(mappedRow.price) || asTrimmedString(mappedRow.discounted_price);
   const old_price = asTrimmedString(mappedRow.old_price);
   const construction_price_from = asTrimmedString(
     mappedRow.construction_price_from,
@@ -322,6 +410,12 @@ export function validateRow(mappedRow, rowIndex1, seenIds) {
     ? normalizeSquareField(houseAreaSource)
     : "";
   const usableNorm = usableAreaRaw ? normalizeSquareField(usableAreaRaw) : "";
+  const totalBuiltAreaRaw = asTrimmedString(mappedRow.total_built_area) || null;
+  const totalBuiltAreaNorm = totalBuiltAreaRaw
+    ? normalizeSquareField(totalBuiltAreaRaw)
+    : null;
+  const explication = buildStructuredExplication(mappedRow);
+  const constructionMaterials = buildMaterials(mappedRow);
 
   const attrs = {
     plot_area: plotNorm || null,
@@ -330,6 +424,21 @@ export function validateRow(mappedRow, rowIndex1, seenIds) {
     implementation_period:
       asTrimmedString(mappedRow.implementation_period) || null,
     house_dimensions: asTrimmedString(mappedRow.house_dimensions) || null,
+    style: asTrimmedString(mappedRow.style) || null,
+    garage: asTrimmedString(mappedRow.has_garage) || null,
+    canopy: asTrimmedString(mappedRow.has_canopy) || null,
+    basement: asTrimmedString(mappedRow.has_basement) || null,
+    terrace: asTrimmedString(mappedRow.terrace) || null,
+    bedrooms: asTrimmedString(mappedRow.bedrooms) || null,
+    total_built_area: totalBuiltAreaNorm,
+    discount: asTrimmedString(mappedRow.discount) || null,
+    discounted_price: asTrimmedString(mappedRow.discounted_price) || null,
+    print_price: asTrimmedString(mappedRow.print_price) || null,
+    site_status: asTrimmedString(mappedRow.site_status) || null,
+    source_photo_url: asTrimmedString(mappedRow.source_photo_url) || null,
+    note: asTrimmedString(mappedRow.note) || null,
+    ...(explication ? { explication } : {}),
+    ...(constructionMaterials ? { constructionMaterials } : {}),
   };
   const attributes = Object.values(attrs).some(
     (v) => v != null && String(v).trim() !== "",
@@ -398,6 +507,11 @@ export function buildSaleProjectImportPayload(row, sortOrderInCategory) {
     old_price: row.old_price,
     construction_price_from: row.construction_price_from,
     status: row.status,
+    plot_area: row.attributes?.plot_area ?? null,
+    house_area: row.attributes?.house_area ?? row.area,
+    usable_area: row.attributes?.usable_area ?? null,
+    implementation_period: row.attributes?.implementation_period ?? null,
+    house_dimensions: row.attributes?.house_dimensions ?? null,
     published: !!row.published,
     featured: !!row.featured,
     sort_order_in_category: sortOrderInCategory,

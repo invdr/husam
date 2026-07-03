@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 import { Badge, Card, CardContent } from "@/components/common";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { phonePattern } from "@/utils/constants";
 import { useQuiz } from "@/hooks/useQuiz";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
@@ -122,7 +122,7 @@ export default function Calculator() {
       ]
         .filter(Boolean)
         .join("\n");
-      openWhatsApp(text);
+      openMessenger(text);
       // Мягкий reset после успешной отправки
       setTimeout(() => {
         resetQuiz();
@@ -279,8 +279,8 @@ export default function Calculator() {
                 >
                   {isLastStep ? (
                     <>
-                      <span className="sm:hidden">В WhatsApp</span>
-                      <span className="hidden sm:inline">Отправить в WhatsApp</span>
+                      <span className="sm:hidden">В мессенджер</span>
+                      <span className="hidden sm:inline">Отправить в мессенджер</span>
                     </>
                   ) : (
                     "Далее"

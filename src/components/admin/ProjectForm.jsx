@@ -1,7 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
 import Icon from "@/components/common/Icon";
+import {
+  getImageReorderAction,
+  getImageNamesAfterAppend,
+} from "@/components/admin/projectImageReorder";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import {
   CATALOG_TYPE_DESIGN,
@@ -112,6 +132,30 @@ function formatBudgetInput(raw) {
   return normalized + " млн ₽";
 }
 
+function SortableThumb({ id, children, className = "" }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={`${className} relative`}>
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-0.5 top-0.5 z-10 flex h-6 w-6 cursor-grab items-center justify-center rounded bg-black/50 text-white transition hover:bg-brand/80 active:cursor-grabbing"
+        aria-label="Перетащить для изменения порядка"
+      >
+        <Icon name="grip-vertical" className="h-3.5 w-3.5" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function ProjectForm({ project, onSave, onCancel, existingProjects = [] }) {
   const isEdit = !!project;
   const { types, refetch } = useProjectTypes();
@@ -134,6 +178,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
   });
   const [scopeInput, setScopeInput] = useState("");
   const [imageFiles, setImageFiles] = useState([]);
+  const [pendingImagesFirst, setPendingImagesFirst] = useState(false);
   const [pendingPreviewUrls, setPendingPreviewUrls] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -230,6 +275,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
   };
 
   const setPendingFileAsMain = (idx) => {
+    setPendingImagesFirst(true);
     if (idx === 0) return;
     setImageFiles((prev) => {
       const next = [...prev];
@@ -245,7 +291,12 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [imageFiles]);
 
+  useEffect(() => {
+    if (imageFiles.length === 0) setPendingImagesFirst(false);
+  }, [imageFiles.length]);
+
   const setImageAsMain = (idx) => {
+    setPendingImagesFirst(false);
     if (idx === 0) return;
     setExistingImages((prev) => {
       const next = [...prev];
@@ -260,6 +311,40 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       return { ...f, images: imgs };
     });
   };
+
+  const reorderExistingImages = useCallback((oldIndex, newIndex) => {
+    setExistingImages((prev) => arrayMove(prev, oldIndex, newIndex));
+    setForm((f) => ({
+      ...f,
+      images: arrayMove(f.images || [], oldIndex, newIndex),
+    }));
+  }, []);
+
+  const reorderPendingFiles = useCallback((oldIndex, newIndex) => {
+    setImageFiles((prev) => arrayMove(prev, oldIndex, newIndex));
+  }, []);
+
+  const imageDragSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleImageDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+      const action = getImageReorderAction(active.id, over?.id);
+      if (!action) return;
+
+      if (action.group === "existing") {
+        reorderExistingImages(action.oldIndex, action.newIndex);
+      }
+
+      if (action.group === "pending") {
+        reorderPendingFiles(action.oldIndex, action.newIndex);
+      }
+    },
+    [reorderExistingImages, reorderPendingFiles]
+  );
 
   const addNewType = async () => {
     const name = newTypeInput.trim();
@@ -435,6 +520,18 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
         savedProject = await pb
           .collection("projects")
           .update(project.recordId ?? project.id, updatePayload);
+        if (newImageFiles.length > 0) {
+          const orderedImageNames = getImageNamesAfterAppend(
+            savedProject.images,
+            existingImageNames,
+            pendingImagesFirst,
+          );
+          savedProject = await pb
+            .collection("projects")
+            .update(project.recordId ?? project.id, {
+              images: orderedImageNames,
+            });
+        }
       } else {
         if (newImageFiles.length > 0) {
           row.images = newImageFiles;
@@ -1070,39 +1167,56 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       <div>
         <div className={labelClass}>Изображения</div>
         {existingImages.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {existingImages.map((url, idx) => (
-              <div key={url} className="relative group">
-                <img
-                  src={url}
-                  alt={`Фото ${idx + 1}`}
-                  className={`h-20 w-20 rounded-lg object-cover ${idx === 0 ? "ring-2 ring-brand" : ""}`}
-                />
-                {idx === 0 ? (
-                  <span className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink">
-                    Главная
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setImageAsMain(idx)}
-                    className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-black/70 py-0.5 text-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition hover:bg-brand hover:text-ink"
-                    title="Сделать главной"
+          <DndContext
+            sensors={imageDragSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleImageDragEnd}
+          >
+            <SortableContext
+              items={existingImages.map((_, i) => `existing-${i}`)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="mb-3 flex flex-wrap gap-2">
+                {existingImages.map((url, idx) => (
+                  <SortableThumb
+                    key={url}
+                    id={`existing-${idx}`}
+                    className="relative group"
                   >
-                    Сделать главной
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removeExistingImage(idx)}
-                  className="absolute -top-1 -right-1 rounded-full bg-red-500 p-0.5 text-white opacity-0 group-hover:opacity-100 transition"
-                  aria-label="Удалить"
-                >
-                  <Icon name="x" className="h-3 w-3" />
-                </button>
+                    <img
+                      src={url}
+                      alt={`Фото ${idx + 1}`}
+                      className={`h-20 w-20 rounded-lg object-cover ${
+                        idx === 0 ? "ring-2 ring-brand" : ""
+                      }`}
+                    />
+                    {idx === 0 && !pendingImagesFirst ? (
+                      <span className="absolute left-0 bottom-0 right-0 z-20 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink pointer-events-none">
+                        Главная
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setImageAsMain(idx)}
+                        className="absolute left-0 bottom-0 right-0 z-20 rounded-b-lg bg-black/70 py-0.5 text-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition hover:bg-brand hover:text-ink"
+                        title="Сделать главной"
+                      >
+                        Сделать главной
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(idx)}
+                      className="absolute -top-1 -right-1 z-20 rounded-full bg-red-500 p-0.5 text-white opacity-0 group-hover:opacity-100 transition"
+                      aria-label="Удалить"
+                    >
+                      <Icon name="x" className="h-3 w-3" />
+                    </button>
+                  </SortableThumb>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
         <div
           onDragOver={(e) => {
@@ -1143,48 +1257,66 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
           <p className="mt-1 text-xs text-gray-500">image/*, до 5 MB</p>
         </div>
         {imageFiles.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {imageFiles.map((file, idx) => (
-              <div
-                key={`${file.name}-${file.size}-${file.lastModified}`}
-                className="relative group"
-              >
-                {pendingPreviewUrls[idx] ? (
-                  <img
-                    src={pendingPreviewUrls[idx]}
-                    alt={`К загрузке ${idx + 1}`}
-                    className={`h-20 w-20 rounded-lg object-cover ${idx === 0 ? "ring-2 ring-brand" : ""}`}
-                  />
-                ) : (
-                  <div className={`flex h-20 w-20 items-center justify-center rounded-lg bg-brand/20 text-gray-400 ${idx === 0 ? "ring-2 ring-brand" : ""}`}>
-                    <Icon name="image-plus" className="h-8 w-8" />
-                  </div>
-                )}
-                {idx === 0 ? (
-                  <span className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink">
-                    Главная
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPendingFileAsMain(idx)}
-                    className="absolute left-0 bottom-0 right-0 rounded-b-lg bg-black/70 py-0.5 text-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition hover:bg-brand hover:text-ink"
-                    title="Сделать главной"
+          <DndContext
+            sensors={imageDragSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleImageDragEnd}
+          >
+            <SortableContext
+              items={imageFiles.map((_, i) => `pending-${i}`)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="mt-3 flex flex-wrap gap-2">
+                {imageFiles.map((file, idx) => (
+                  <SortableThumb
+                    key={`pending-${file.name}-${file.size}-${file.lastModified}`}
+                    id={`pending-${idx}`}
+                    className="relative group"
                   >
-                    Сделать главной
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => removePendingFile(idx)}
-                  className="absolute -top-1 -right-1 rounded-full bg-red-500 p-0.5 text-white opacity-0 group-hover:opacity-100 transition"
-                  aria-label="Удалить"
-                >
-                  <Icon name="x" className="h-3 w-3" />
-                </button>
+                    {pendingPreviewUrls[idx] ? (
+                      <img
+                        src={pendingPreviewUrls[idx]}
+                        alt={`К загрузке ${idx + 1}`}
+                        className={`h-20 w-20 rounded-lg object-cover ${
+                          idx === 0 ? "ring-2 ring-brand" : ""
+                        }`}
+                      />
+                    ) : (
+                      <div
+                        className={`flex h-20 w-20 items-center justify-center rounded-lg bg-brand/20 text-gray-400 ${
+                          idx === 0 ? "ring-2 ring-brand" : ""
+                        }`}
+                      >
+                        <Icon name="image-plus" className="h-8 w-8" />
+                      </div>
+                    )}
+                    {idx === 0 && (existingImages.length === 0 || pendingImagesFirst) ? (
+                      <span className="absolute left-0 bottom-0 right-0 z-20 rounded-b-lg bg-brand/90 py-0.5 text-center text-[10px] font-medium text-ink pointer-events-none">
+                        Главная
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPendingFileAsMain(idx)}
+                        className="absolute left-0 bottom-0 right-0 z-20 rounded-b-lg bg-black/70 py-0.5 text-center text-[10px] text-white opacity-0 group-hover:opacity-100 transition hover:bg-brand hover:text-ink"
+                        title="Сделать главной"
+                      >
+                        Сделать главной
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePendingFile(idx)}
+                      className="absolute -top-1 -right-1 z-20 rounded-full bg-red-500 p-0.5 text-white opacity-0 group-hover:opacity-100 transition"
+                      aria-label="Удалить"
+                    >
+                      <Icon name="x" className="h-3 w-3" />
+                    </button>
+                  </SortableThumb>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

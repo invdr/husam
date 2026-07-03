@@ -189,13 +189,18 @@ export default function CatalogEditor({ onBreadcrumbChange }) {
   );
 
   const totalPages = Math.ceil(flatProjects.length / ADMIN_PAGE_SIZE);
+  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
   const showPagination = totalPages > 1;
   const paginatedFlat = showPagination
     ? flatProjects.slice(
-        (currentPage - 1) * ADMIN_PAGE_SIZE,
-        currentPage * ADMIN_PAGE_SIZE
+        (currentPageSafe - 1) * ADMIN_PAGE_SIZE,
+        currentPageSafe * ADMIN_PAGE_SIZE
       )
     : flatProjects;
+
+  useEffect(() => {
+    if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
+  }, [currentPage, currentPageSafe]);
 
   const projectsByTypePaginated = useMemo(() => {
     const map = new Map();
@@ -491,7 +496,7 @@ export default function CatalogEditor({ onBreadcrumbChange }) {
           {showPagination && (
             <div className="mt-8">
               <Pagination
-                page={currentPage}
+                page={currentPageSafe}
                 totalPages={totalPages}
                 onPageChange={(p) => {
                   setCurrentPage(p);

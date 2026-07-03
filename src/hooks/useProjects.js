@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
+import {
+  isPocketbaseAbortError,
+  subscribeToPocketbaseCollections,
+} from "@/hooks/pocketbaseRealtime";
 
 function parseMaybeJsonObject(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value;
@@ -91,6 +95,9 @@ export function useProjects() {
       setProjects(normalized);
       setError(null);
     } catch (err) {
+      if (isPocketbaseAbortError(err)) {
+        return;
+      }
       setError(err);
       setProjects([]);
     } finally {
@@ -108,13 +115,24 @@ export function useProjects() {
       await fetchProjects(true);
       if (cancelled) return;
 
-      const unsubscribe = await pb.collection("projects").subscribe("*", () => {
-        if (!cancelled) fetchProjects(false);
-      });
+      const unsubscribe = await subscribeToPocketbaseCollections(
+        ["projects", "project_types"],
+        () => {
+          if (!cancelled) fetchProjects(false);
+        }
+      );
+      if (cancelled) {
+        unsubscribe();
+        return;
+      }
       removeChannel = () => {
         unsubscribe();
       };
-    })();
+    })().catch((err) => {
+      if (!cancelled && !isPocketbaseAbortError(err)) {
+        setError(err);
+      }
+    });
 
     return () => {
       cancelled = true;

@@ -7,7 +7,7 @@ import {
   CATALOG_TYPE_REPAIR,
   CATALOG_TYPE_DESIGN,
 } from "@/utils/catalogAttributes";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { useProjects } from "@/hooks/useProjects";
 import { usePerView } from "@/hooks/usePerView";
 import { useLoading } from "@/contexts/LoadingContext";
@@ -123,7 +123,7 @@ function ArrowCarousel({ items, onMore }) {
                   </button>
                   <button
                     onClick={() =>
-                      openWhatsApp(
+                      openMessenger(
                         `Хочу проект ${project.id} — "${project.title}"`,
                       )
                     }

@@ -10,7 +10,7 @@ import { Icon } from "@/components/common";
 import SeoHead from "@/components/common/SeoHead";
 import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
 import { getDisplayFields } from "@/utils/catalogAttributes";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { useProjects } from "@/hooks/useProjects";
 
 function toAbsoluteImageUrl(url) {
@@ -89,7 +89,7 @@ export default function ProjectDetail() {
     const url = encodeURIComponent(shareUrl);
     const text = encodeURIComponent(shareText);
     let link = "";
-    if (platform === "whatsapp") link = `https://wa.me/?text=${text}%20${url}`;
+    if (platform === "messenger") link = `https://wa.me/?text=${text}%20${url}`;
     else if (platform === "telegram") link = `https://t.me/share/url?url=${url}&text=${text}`;
     else if (platform === "vkontakte") link = `https://vk.com/share.php?url=${url}&title=${text}`;
     if (link) window.open(link, "_blank", "noopener,noreferrer");
@@ -287,11 +287,11 @@ export default function ProjectDetail() {
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => handleShare("whatsapp")}
+                    onClick={() => handleShare("messenger")}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-3 py-2.5 text-sm text-white transition-opacity hover:opacity-90"
                   >
                     <Icon name="message-circle" className="h-4 w-4" />
-                    WhatsApp
+                    мессенджер
                   </button>
                   <button
                     onClick={() => handleShare("telegram")}
@@ -314,7 +314,7 @@ export default function ProjectDetail() {
               <div className="hidden flex-col gap-3 lg:flex">
                 <button
                   onClick={() =>
-                    openWhatsApp(`Интересует проект ${project.id} — "${project.title}"`)
+                    openMessenger(`Интересует проект ${project.id} — "${project.title}"`)
                   }
                   className="w-full rounded-xl bg-brand px-5 py-3.5 text-base font-medium text-ink transition-opacity hover:opacity-90"
                 >
@@ -322,7 +322,7 @@ export default function ProjectDetail() {
                 </button>
                 <button
                   onClick={() =>
-                    openWhatsApp(`Нужна консультация по проекту ${project.id}`)
+                    openMessenger(`Нужна консультация по проекту ${project.id}`)
                   }
                   className="w-full rounded-xl border-2 border-brand px-5 py-3.5 text-base font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                 >
@@ -373,7 +373,7 @@ export default function ProjectDetail() {
                 <div className="mt-6 flex flex-row gap-2 lg:hidden">
                   <button
                     onClick={() =>
-                      openWhatsApp(`Интересует проект ${project.id} — "${project.title}"`)
+                      openMessenger(`Интересует проект ${project.id} — "${project.title}"`)
                     }
                     className="flex-1 min-w-0 rounded-xl bg-brand px-3 py-2.5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
                   >
@@ -381,7 +381,7 @@ export default function ProjectDetail() {
                   </button>
                   <button
                     onClick={() =>
-                      openWhatsApp(`Нужна консультация по проекту ${project.id}`)
+                      openMessenger(`Нужна консультация по проекту ${project.id}`)
                     }
                     className="flex-1 min-w-0 rounded-xl border-2 border-brand px-3 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                   >

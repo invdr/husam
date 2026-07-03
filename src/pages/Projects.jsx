@@ -4,7 +4,7 @@ import { Badge, Icon, Pagination } from "@/components/common";
 import { SaleProjectCard, SaleProjectCardSkeleton } from "@/components/sale";
 import SeoHead from "@/components/common/SeoHead";
 import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { useSaleProjects } from "@/hooks/useSaleProjects";
 import { useSaleProjectTypes } from "@/hooks/useSaleProjectTypes";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -185,13 +185,18 @@ export default function Projects() {
     facetFilters.basement;
 
   const totalPages = Math.ceil(filteredAndSortedProjects.length / PAGE_SIZE);
+  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
   const showPagination = totalPages > 1;
   const paginatedProjects = showPagination
     ? filteredAndSortedProjects.slice(
-        (currentPage - 1) * PAGE_SIZE,
-        currentPage * PAGE_SIZE,
+        (currentPageSafe - 1) * PAGE_SIZE,
+        currentPageSafe * PAGE_SIZE,
       )
     : filteredAndSortedProjects;
+
+  useEffect(() => {
+    if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
+  }, [currentPage, currentPageSafe]);
 
   return (
     <>
@@ -555,7 +560,7 @@ export default function Projects() {
                       project={project}
                       customFieldDefs={customFieldDefs}
                       onRequestClick={(selectedProject) =>
-                        openWhatsApp(
+                        openMessenger(
                           `Интересует готовый проект ${selectedProject.id} — "${selectedProject.title}"`,
                         )
                       }
@@ -567,7 +572,7 @@ export default function Projects() {
               {showPagination && (
                 <div className="mt-10">
                   <Pagination
-                    page={currentPage}
+                    page={currentPageSafe}
                     totalPages={totalPages}
                     onPageChange={(nextPage) => {
                       setCurrentPage(nextPage);

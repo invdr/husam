@@ -39,15 +39,6 @@ export default function SaleProjectsEditor() {
   const [currentPage, setCurrentPage] = useState(1);
   const [collapsedSections, setCollapsedSections] = useState(() => new Set());
   const { types, refetch: refetchTypes } = useSaleProjectTypes();
-  const isAllCollapsed =
-    types.length > 0 && types.every((id) => collapsedSections.has(id));
-
-  const collapsedInitialized = useRef(false);
-  useEffect(() => {
-    if (collapsedInitialized.current || types.length === 0) return;
-    setCollapsedSections(new Set(types));
-    collapsedInitialized.current = true;
-  }, [types]);
 
   const toggleSection = (sectionId) => {
     setCollapsedSections((prev) => {
@@ -125,13 +116,18 @@ export default function SaleProjectsEditor() {
   );
 
   const totalPages = Math.ceil(flatProjects.length / ADMIN_PAGE_SIZE);
+  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
   const showPagination = totalPages > 1;
   const paginatedFlat = showPagination
     ? flatProjects.slice(
-        (currentPage - 1) * ADMIN_PAGE_SIZE,
-        currentPage * ADMIN_PAGE_SIZE,
+        (currentPageSafe - 1) * ADMIN_PAGE_SIZE,
+        currentPageSafe * ADMIN_PAGE_SIZE,
       )
     : flatProjects;
+
+  useEffect(() => {
+    if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
+  }, [currentPage, currentPageSafe]);
 
   const projectsByTypePaginated = useMemo(() => {
     const map = new Map();
@@ -146,6 +142,23 @@ export default function SaleProjectsEditor() {
     () => Array.from(projectsByTypePaginated.keys()).filter((type) => !types.includes(type)),
     [projectsByTypePaginated, types],
   );
+  const allSectionIds = useMemo(
+    () => [
+      ...types,
+      ...orphanTypes.map((type) => `orphan:${type}`),
+    ],
+    [types, orphanTypes],
+  );
+  const isAllCollapsed =
+    allSectionIds.length > 0 &&
+    allSectionIds.every((id) => collapsedSections.has(id));
+
+  const collapsedInitialized = useRef(false);
+  useEffect(() => {
+    if (collapsedInitialized.current || allSectionIds.length === 0) return;
+    setCollapsedSections(new Set(allSectionIds));
+    collapsedInitialized.current = true;
+  }, [allSectionIds]);
 
   const applyReorderToProjects = useCallback((categoryType, reordered) => {
     setProjects((prev) => {
@@ -272,12 +285,12 @@ export default function SaleProjectsEditor() {
           >
             Категории
           </button>
-          {projects.length > 0 && filteredProjects.length > 0 && types.length > 0 && (
+          {projects.length > 0 && filteredProjects.length > 0 && allSectionIds.length > 0 && (
             <button
               type="button"
               onClick={() =>
                 setCollapsedSections(
-                  isAllCollapsed ? new Set() : new Set(types)
+                  isAllCollapsed ? new Set() : new Set(allSectionIds)
                 )
               }
               className="flex items-center gap-2 rounded-xl border border-brand/30 px-4 py-2 text-sm text-gray-300 transition-colors hover:border-brand hover:text-white"
@@ -472,7 +485,7 @@ export default function SaleProjectsEditor() {
           {showPagination && (
             <div className="mt-8">
               <Pagination
-                page={currentPage}
+                page={currentPageSafe}
                 totalPages={totalPages}
                 onPageChange={(page) => {
                   setCurrentPage(page);

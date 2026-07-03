@@ -16,7 +16,7 @@ export default function ProjectCard({
   showDetails = true,
 }) {
   return (
-    <Card className="group h-full overflow-hidden border-brand/20 bg-ink flex flex-col transition-all hover:border-brand/40 hover:shadow-xl">
+    <Card variant="listing">
       <div className="px-2 pt-2 pb-1 sm:px-3 sm:pt-3 sm:pb-1.5">
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
           <ProjectImage
@@ -33,15 +33,15 @@ export default function ProjectCard({
           )}
         </div>
       </div>
-      <CardHeader className="px-4 py-2 sm:px-5 sm:py-3">
-        <CardTitle className="font-play text-white text-lg sm:text-xl line-clamp-2" title={project.title}>
+      <CardHeader variant="listing">
+        <CardTitle variant="listing" title={project.title}>
           {project.title}
         </CardTitle>
-        <CardDescription className="text-xs sm:text-sm line-clamp-1" title={project.type}>
+        <CardDescription variant="listingClamped" title={project.type}>
           {project.type}
         </CardDescription>
       </CardHeader>
-      <CardContent className="px-4 pb-3 pt-0 sm:px-5 sm:pb-4 flex-1 flex flex-col">
+      <CardContent variant="listing">
         {showDetails && (() => {
           const fields = getCardDisplayFields(project);
           if (fields.length === 0) return null;

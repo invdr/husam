@@ -28,17 +28,22 @@ function CatalogPaginatedList({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredAndSortedProjects.length / pageSize);
+  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
   const paginatedProjects =
     totalPages > 1
       ? filteredAndSortedProjects.slice(
-          (currentPage - 1) * pageSize,
-          currentPage * pageSize
+          (currentPageSafe - 1) * pageSize,
+          currentPageSafe * pageSize
         )
       : filteredAndSortedProjects;
 
   useEffect(() => {
-    onPageReport?.(currentPage);
-  }, [currentPage, onPageReport]);
+    if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
+  }, [currentPage, currentPageSafe]);
+
+  useEffect(() => {
+    onPageReport?.(currentPageSafe);
+  }, [currentPageSafe, onPageReport]);
 
   return (
     <>
@@ -61,7 +66,7 @@ function CatalogPaginatedList({
       {totalPages > 1 && (
         <div className="mt-10">
           <Pagination
-            page={currentPage}
+            page={currentPageSafe}
             totalPages={totalPages}
             onPageChange={(p) => {
               setCurrentPage(p);

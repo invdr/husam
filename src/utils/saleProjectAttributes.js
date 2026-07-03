@@ -100,6 +100,39 @@ export function getSaleStatusClassName(status) {
   return "border-amber-400/40 bg-amber-500/20 text-amber-300";
 }
 
+export function getConstructionMaterialFields(project) {
+  const materials =
+    project?.constructionMaterials &&
+    typeof project.constructionMaterials === "object"
+      ? project.constructionMaterials
+      : project?.attributes?.constructionMaterials &&
+          typeof project.attributes.constructionMaterials === "object"
+        ? project.attributes.constructionMaterials
+        : {};
+  return [
+    { label: "\u0424\u0443\u043d\u0434\u0430\u043c\u0435\u043d\u0442", value: materials.foundation },
+    { label: "\u0421\u0442\u0435\u043d\u044b", value: materials.walls ?? project?.material },
+    { label: "\u041a\u0440\u043e\u0432\u043b\u044f", value: materials.roof },
+    { label: "\u0424\u0430\u0441\u0430\u0434", value: materials.facade },
+    { label: "\u041e\u0431\u0449\u0438\u0439", value: materials.summary },
+  ].filter((item) => hasValue(item.value));
+}
+
+export function getExplicationSections(project) {
+  const explication =
+    project?.explication && typeof project.explication === "object"
+      ? project.explication
+      : project?.attributes?.explication &&
+          typeof project.attributes.explication === "object"
+        ? project.attributes.explication
+        : {};
+  return [
+    { title: "\u041f\u043e\u0434\u0432\u0430\u043b", text: explication.basement },
+    { title: "1 \u044d\u0442\u0430\u0436", text: explication.floor_1 },
+    { title: "2 \u044d\u0442\u0430\u0436", text: explication.floor_2 },
+  ].filter((section) => hasValue(section.text));
+}
+
 /** Все поля для страницы проекта (включая площадь участка, дома, полезную, срок реализации и доп. поля). Пустые не включаются. */
 export function getSaleDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIELD_DEFS) {
   const withPlaceholder = (value) => asString(value).trim() || EMPTY_PLACEHOLDER;
@@ -112,14 +145,23 @@ export function getSaleDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIE
   };
   const attrs = project?.attributes && typeof project.attributes === "object" ? project.attributes : {};
   const base = [
-    { label: "Комнаты", value: withPlaceholder(project.rooms) },
-    { label: "Этажей", value: withPlaceholder(project.floors) },
-    { label: "Материал", value: withPlaceholder(project.material) },
-    { label: "Площадь участка", value: withPlaceholder(project.plot_area) },
-    { label: "Площадь дома", value: pickDisplayValue(project.area, project.house_area) },
-    { label: "Полезная площадь", value: withPlaceholder(project.usable_area) },
-    { label: "Общие размеры дома", value: withPlaceholder(project.house_dimensions) },
-    { label: "Срок реализации", value: withPlaceholder(project.implementation_period) },
+    { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
+    { label: "\u041a\u043e\u043c\u043d\u0430\u0442\u044b", value: withPlaceholder(project.rooms) },
+    { label: "\u0421\u043f\u0430\u043b\u044c\u043d\u0438", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms) },
+    { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
+    { label: "\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b", value: withPlaceholder(project.material) },
+    { label: "\u0413\u0430\u0440\u0430\u0436", value: withPlaceholder(project.garage ?? attrs.garage) },
+    { label: "\u041d\u0430\u0432\u0435\u0441", value: withPlaceholder(project.canopy ?? attrs.canopy) },
+    { label: "\u0422\u0435\u0440\u0440\u0430\u0441\u0430", value: withPlaceholder(project.terrace ?? attrs.terrace) },
+    { label: "\u041f\u043e\u0434\u0432\u0430\u043b", value: withPlaceholder(project.basement ?? attrs.basement) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0443\u0447\u0430\u0441\u0442\u043a\u0430", value: withPlaceholder(project.plot_area) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: pickDisplayValue(project.area, project.house_area) },
+    { label: "\u041f\u043e\u043b\u0435\u0437\u043d\u0430\u044f \u043f\u043b\u043e\u0449\u0430\u0434\u044c", value: withPlaceholder(project.usable_area) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0432\u0441\u0435\u0445 \u043f\u043e\u0441\u0442\u0440\u043e\u0435\u043a", value: withPlaceholder(project.total_built_area ?? attrs.total_built_area) },
+    { label: "\u041e\u0431\u0449\u0438\u0435 \u0440\u0430\u0437\u043c\u0435\u0440\u044b \u0434\u043e\u043c\u0430", value: withPlaceholder(project.house_dimensions) },
+    { label: "\u0421\u0440\u043e\u043a \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438", value: withPlaceholder(project.implementation_period) },
+    { label: "\u0421\u043a\u0438\u0434\u043a\u0430", value: withPlaceholder(project.discount ?? attrs.discount) },
+    { label: "\u0426\u0435\u043d\u0430 \u0440\u0430\u0441\u043f\u0435\u0447\u0430\u0442\u043a\u0438", value: withPlaceholder(project.print_price ?? attrs.print_price) },
   ];
   const custom = customFieldDefs.map((def) => ({
     label: def.label,
@@ -132,21 +174,28 @@ export function getSaleDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIE
 export function getSaleCardDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIELD_DEFS) {
   const withPlaceholder = (value) => asString(value).trim() || EMPTY_PLACEHOLDER;
   const attrs = project?.attributes && typeof project.attributes === "object" ? project.attributes : {};
+  const materialFields = getConstructionMaterialFields(project);
+  const wallMaterial = materialFields.find((item) => item.label === "\u0421\u0442\u0435\u043d\u044b")?.value ?? project.material;
   const base = [
-    { label: "Площадь участка", value: withPlaceholder(project.plot_area) },
-    { label: "Площадь дома", value: withPlaceholder(project.house_area) },
-    { label: "Полезная площадь", value: withPlaceholder(project.usable_area) },
-    { label: "Общие размеры дома", value: withPlaceholder(project.house_dimensions) },
-    { label: "Срок реализации", value: withPlaceholder(project.implementation_period) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: withPlaceholder(project.house_area || project.area) },
+    { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
+    { label: "\u0421\u043f\u0430\u043b\u044c\u043d\u0438", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms ?? project.rooms) },
+    { label: "\u0421\u0442\u0435\u043d\u044b", value: withPlaceholder(wallMaterial) },
+    { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0443\u0447\u0430\u0441\u0442\u043a\u0430", value: withPlaceholder(project.plot_area) },
   ];
   const custom = customFieldDefs.map((def) => ({
     label: def.label,
     value: withPlaceholder(attrs[def.key]),
-  }));
-  return [...base, ...custom].filter((item) => hasValue(item.value));
+  })).filter((item) => hasValue(item.value));
+  const maxFields = 6;
+  const customLimit = Math.min(custom.length, maxFields);
+  const baseLimit = maxFields - customLimit;
+  return [
+    ...base.filter((item) => hasValue(item.value)).slice(0, baseLimit),
+    ...custom.slice(0, customLimit),
+  ];
 }
-
-// --- Варианты для фильтров каталога готовых проектов (из данных карточек) ---
 
 /** Значение «любой/не важно» для селектов */
 export const FILTER_ANY = "";

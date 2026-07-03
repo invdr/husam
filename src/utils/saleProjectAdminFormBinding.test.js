@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { pickExplicationAndFacetsForSaleProjectForm } from "./saleProjectAdminFormBinding.js";
+import {
+  pickExplicationAndFacetsForSaleProjectForm,
+  syncImportedStructuredSaleProjectAttributes,
+} from "./saleProjectAdminFormBinding.js";
 import { normalizeSaleProject } from "../hooks/useSaleProjects.js";
 
 describe("pickExplicationAndFacetsForSaleProjectForm", () => {
@@ -61,5 +64,50 @@ describe("pickExplicationAndFacetsForSaleProjectForm", () => {
       id: "HS-101",
       recordId: "pb-record-101",
     });
+  });
+
+  it("keeps imported structured explication when manual save does not edit it", () => {
+    const attrs = syncImportedStructuredSaleProjectAttributes(
+      {
+        explication: { floor_1: "Old structured room" },
+        constructionMaterials: {
+          foundation: "Ж/Б плита",
+          walls: "Old structured wall",
+          roof: "Металл",
+        },
+        note: "keep me",
+      },
+      "Газобетон",
+      {
+        hasGarage: true,
+        hasCanopy: false,
+        hasBasement: false,
+      },
+    );
+
+    expect(attrs.explication).toEqual({ floor_1: "Old structured room" });
+    expect(attrs.note).toBe("keep me");
+    expect(attrs.garage).toBe("Да");
+    expect(attrs.canopy).toBeNull();
+    expect(attrs.basement).toBeNull();
+    expect(attrs.constructionMaterials).toMatchObject({
+      foundation: "Ж/Б плита",
+      walls: "Газобетон",
+      roof: "Металл",
+    });
+  });
+
+  it("clears imported structured explication when manual room explanation changes", () => {
+    const attrs = syncImportedStructuredSaleProjectAttributes(
+      {
+        explication: { floor_1: "Old structured room" },
+        constructionMaterials: { walls: "Old structured wall" },
+      },
+      "Газобетон",
+      { roomExplanationChanged: true },
+    );
+
+    expect(attrs.explication).toBeUndefined();
+    expect(attrs.constructionMaterials?.walls).toBe("Газобетон");
   });
 });

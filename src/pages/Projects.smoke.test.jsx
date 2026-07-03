@@ -42,8 +42,8 @@ vi.mock("@/components/common/JsonLd", () => ({
   BreadcrumbsJsonLd: () => null,
 }));
 
-vi.mock("@/utils/whatsapp", () => ({
-  openWhatsApp: () => {},
+vi.mock("@/utils/messenger", () => ({
+  openMessenger: () => {},
 }));
 
 describe("Projects smoke", () => {

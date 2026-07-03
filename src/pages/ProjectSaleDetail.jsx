@@ -7,7 +7,7 @@ import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { Icon } from "@/components/common";
 import SeoHead from "@/components/common/SeoHead";
 import { BreadcrumbsJsonLd } from "@/components/common/JsonLd";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { useSaleProjects } from "@/hooks/useSaleProjects";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import {
@@ -16,6 +16,8 @@ import {
   SALE_PROJECT_CUSTOM_FIELDS_KEY,
   parseSaleProjectCustomFields,
   formatConstructionPrice,
+  getConstructionMaterialFields,
+  getExplicationSections,
 } from "@/utils/saleProjectAttributes";
 
 function ProjectGallery({ images, projectTitle }) {
@@ -172,6 +174,8 @@ export default function ProjectSaleDetail() {
   const visibleSaleFields = saleDisplayFields.filter(
     ({ value }) => typeof value === "string" && value.trim() !== "" && value.trim() !== "—"
   );
+  const explicationSections = getExplicationSections(project);
+  const constructionMaterialFields = getConstructionMaterialFields(project);
 
   return (
     <>
@@ -247,7 +251,41 @@ export default function ProjectSaleDetail() {
                 </section>
               )}
 
-              {project.roomExplanation && project.roomExplanation.trim() && (
+              {explicationSections.length > 0 && (
+                <section className="mt-6">
+                  <h2 className="font-play text-xl font-bold text-white mb-3">
+                    Экспликация по этажам
+                  </h2>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {explicationSections.map((section) => (
+                      <div
+                        key={section.title}
+                        className="rounded-2xl border border-brand/15 bg-ink/40 p-4"
+                      >
+                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-brand">
+                          {section.title}
+                        </h3>
+                        <div className="space-y-1.5 text-sm leading-relaxed text-gray-200">
+                          {section.text
+                            .split(/\r?\n/)
+                            .map((line) => line.trim())
+                            .filter(Boolean)
+                            .map((line) => (
+                              <div
+                                key={`${section.title}-${line}`}
+                                className="border-b border-white/5 pb-1.5 last:border-b-0 last:pb-0"
+                              >
+                                {line}
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {explicationSections.length === 0 && project.roomExplanation && project.roomExplanation.trim() && (
                 <section className="mt-6">
                   <h2 className="font-play text-xl font-bold text-white mb-3">
                     Экспликация проекта
@@ -274,6 +312,26 @@ export default function ProjectSaleDetail() {
                         );
                       })}
                   </dl>
+                </section>
+              )}
+
+              {constructionMaterialFields.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="font-play text-xl font-bold text-white mb-4">
+                    Конструктив и материалы
+                  </h2>
+                  <div className="rounded-2xl border border-brand/15 bg-ink/40 p-3 sm:p-4 md:p-5">
+                    <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                      {constructionMaterialFields.map(({ label, value }) => (
+                        <div key={label}>
+                          <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500">
+                            {label}
+                          </dt>
+                          <dd className="mt-1 font-medium text-white">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
                 </section>
               )}
 
@@ -363,7 +421,7 @@ export default function ProjectSaleDetail() {
                 <button
                   type="button"
                   onClick={() =>
-                    openWhatsApp(
+                    openMessenger(
                       `Хочу купить готовый проект ${project.id} — "${project.title}"`
                     )
                   }
@@ -374,7 +432,7 @@ export default function ProjectSaleDetail() {
                 <button
                   type="button"
                   onClick={() =>
-                    openWhatsApp(`Нужна консультация по проекту ${project.id}`)
+                    openMessenger(`Нужна консультация по проекту ${project.id}`)
                   }
                   className="w-full rounded-xl border-2 border-brand px-5 py-3.5 text-base font-medium text-brand transition-colors hover:bg-brand hover:text-ink"
                 >

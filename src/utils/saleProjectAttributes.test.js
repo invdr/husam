@@ -135,6 +135,23 @@ describe("saleProjectAttributes", () => {
       const fields = getSaleDisplayFields(project);
       expect(fields.find((f) => f.label === "Этажей")).toBeUndefined();
     });
+
+    it("does not duplicate structured construction materials in generic fields", () => {
+      const fields = getSaleDisplayFields({
+        material: "Газобетон",
+        attributes: {
+          constructionMaterials: {
+            foundation: "Ж/Б плита",
+            walls: "Газобетон",
+            roof: "Металл",
+          },
+        },
+      });
+
+      expect(fields).toContainEqual({ label: "Материал", value: "Газобетон" });
+      expect(fields.find((f) => f.label === "Фундамент")).toBeUndefined();
+      expect(fields.find((f) => f.label === "Кровля")).toBeUndefined();
+    });
   });
 
   describe("getSaleCardDisplayFields", () => {
@@ -143,6 +160,24 @@ describe("saleProjectAttributes", () => {
       const fields = getSaleCardDisplayFields(project);
       expect(fields.some((f) => f.label === "Площадь участка" && f.value === "10")).toBe(true);
       expect(fields.some((f) => f.label === "Площадь дома" && f.value === "150")).toBe(true);
+    });
+
+    it("keeps configured custom fields within the compact card limit", () => {
+      const project = {
+        house_area: "150",
+        floors: "2",
+        rooms: "4",
+        material: "Кирпич",
+        style: "Классика",
+        plot_area: "10",
+        attributes: { ceiling_height: "3 м" },
+      };
+      const fields = getSaleCardDisplayFields(project, [
+        { key: "ceiling_height", label: "Высота потолков" },
+      ]);
+
+      expect(fields).toHaveLength(6);
+      expect(fields).toContainEqual({ label: "Высота потолков", value: "3 м" });
     });
   });
 

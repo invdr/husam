@@ -118,6 +118,7 @@ export default function Hero() {
             </button>
             <button
               type="button"
+              onClick={() => scrollToSection("contacts")}
               className="w-full rounded-xl border border-brand px-6 py-3 text-base text-brand transition hover:bg-brand hover:text-ink sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
             >
               {c.hero_cta_secondary}

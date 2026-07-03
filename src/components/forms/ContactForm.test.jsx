@@ -3,11 +3,11 @@ import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ContactForm from "./ContactForm";
 
-vi.mock("@/utils/whatsapp", () => ({
-  openWhatsApp: vi.fn(),
+vi.mock("@/utils/messenger", () => ({
+  openMessenger: vi.fn(),
 }));
 
-const openWhatsApp = (await import("@/utils/whatsapp")).openWhatsApp;
+const openMessenger = (await import("@/utils/messenger")).openMessenger;
 
 /** Один экземпляр формы. */
 function getForm() {
@@ -26,24 +26,24 @@ describe("ContactForm", () => {
     expect(within(form).getByPlaceholderText("Ваше имя")).toBeInTheDocument();
     expect(within(form).getByPlaceholderText("Телефон")).toBeInTheDocument();
     expect(within(form).getByRole("combobox")).toBeInTheDocument();
-    expect(within(form).getByRole("button", { name: /отправить заявку в whatsapp/i })).toBeInTheDocument();
+    expect(within(form).getByRole("button", { name: /отправить заявку в мессенджер/i })).toBeInTheDocument();
   });
 
-  it("при отправке с пустыми полями не вызывает openWhatsApp и помечает поля ошибкой", async () => {
+  it("при отправке с пустыми полями не вызывает openMessenger и помечает поля ошибкой", async () => {
     const user = userEvent.setup();
     render(<ContactForm />);
     const form = getForm();
     const submitBtn = within(form).getByRole("button", { name: /отправить заявку/i });
     await user.click(submitBtn);
 
-    expect(openWhatsApp).not.toHaveBeenCalled();
+    expect(openMessenger).not.toHaveBeenCalled();
     const nameEl = form.querySelector('[name="name"]');
     const telEl = form.querySelector('[name="tel"]');
     expect(nameEl).toHaveClass("form-error");
     expect(telEl).toHaveClass("form-error");
   });
 
-  it("при невалидном телефоне не вызывает openWhatsApp", async () => {
+  it("при невалидном телефоне не вызывает openMessenger", async () => {
     const user = userEvent.setup();
     render(<ContactForm />);
     const form = getForm();
@@ -52,12 +52,12 @@ describe("ContactForm", () => {
     await user.selectOptions(within(form).getByRole("combobox"), "Строительство");
     await user.click(within(form).getByRole("button", { name: /отправить заявку/i }));
 
-    expect(openWhatsApp).not.toHaveBeenCalled();
+    expect(openMessenger).not.toHaveBeenCalled();
     const telEl = form.querySelector('[name="tel"]');
     expect(telEl).toHaveClass("form-error");
   });
 
-  it("при неотмеченном согласии не вызывает openWhatsApp", async () => {
+  it("при неотмеченном согласии не вызывает openMessenger", async () => {
     const user = userEvent.setup();
     render(<ContactForm />);
     const form = getForm();
@@ -66,7 +66,7 @@ describe("ContactForm", () => {
     await user.selectOptions(within(form).getByRole("combobox"), "Строительство");
     await user.click(within(form).getByRole("button", { name: /отправить заявку/i }));
 
-    expect(openWhatsApp).not.toHaveBeenCalled();
+    expect(openMessenger).not.toHaveBeenCalled();
     expect(within(form).getByRole("checkbox")).toHaveClass("form-error");
   });
 
@@ -84,7 +84,7 @@ describe("ContactForm", () => {
 
     expect(form.querySelector('[name="name"]')).not.toHaveClass("form-error");
     expect(form.querySelector('[name="tel"]')).not.toHaveClass("form-error");
-    expect(openWhatsApp).toHaveBeenCalledTimes(1);
+    expect(openMessenger).toHaveBeenCalledTimes(1);
   });
 
   it("при заполненном комментарии отправка проходит без ошибки валидации", async () => {
@@ -98,7 +98,7 @@ describe("ContactForm", () => {
     fireEvent.submit(form);
 
     expect(form.querySelector('[name="tel"]')).not.toHaveClass("form-error");
-    expect(openWhatsApp).toHaveBeenCalledWith(
+    expect(openMessenger).toHaveBeenCalledWith(
       expect.stringContaining("Нужен срочный выезд"),
       undefined,
     );

@@ -5,7 +5,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/common";
-import { openWhatsApp } from "@/utils/whatsapp";
+import { openMessenger } from "@/utils/messenger";
 import { phonePattern } from "@/utils/constants";
 
 export default function ContactForm({ phone }) {
@@ -34,7 +34,7 @@ export default function ContactForm({ phone }) {
     if (!consentValid) ok = false;
     if (!ok) return;
 
-    openWhatsApp(
+    openMessenger(
       `Запрос с сайта\nИмя: ${name}\nТелефон: ${tel}\nУслуга: ${service}\nКомментарий: ${
         comment || ""
       }`,
@@ -85,7 +85,7 @@ export default function ContactForm({ phone }) {
             конфиденциальности
           </label>
           <button className="w-full rounded-xl bg-brand py-4 text-ink transition hover:opacity-90">
-            Отправить заявку в WhatsApp
+            Отправить заявку в мессенджер
           </button>
         </form>
       </CardContent>
