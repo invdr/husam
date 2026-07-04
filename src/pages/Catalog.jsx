@@ -185,7 +185,7 @@ export default function Catalog() {
     <>
       <SeoHead
         title="Наши работы"
-        description="Наши работы HUSAM STROY INVEST — строительство, ремонт и дизайн интерьеров. Реализованные объекты."
+        description="Наши работы HUSAM — строительство, ремонт и дизайн интерьеров. Реализованные объекты."
       />
       <BreadcrumbsJsonLd
         items={[

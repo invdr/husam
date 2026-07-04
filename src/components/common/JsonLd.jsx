@@ -6,7 +6,7 @@ export function OrganizationJsonLd() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "HUSAM STROY INVEST",
+    name: "HUSAM",
     url: baseUrl,
     description: "Проектирование, строительство, ремонт и дизайн интерьеров от экспертов федерального уровня.",
     sameAs: [],
@@ -24,7 +24,7 @@ export function LocalBusinessJsonLd() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
-    name: "HUSAM STROY INVEST",
+    name: "HUSAM",
     url: baseUrl,
     areaServed: {
       "@type": "Country",
@@ -109,7 +109,7 @@ export default function CatalogJsonLd({ projects }) {
         ...(image && { image }),
         author: {
           "@type": "Organization",
-          name: "HUSAM STROY INVEST",
+          name: "HUSAM",
         },
       },
     };
@@ -118,7 +118,7 @@ export default function CatalogJsonLd({ projects }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Каталог проектов HUSAM STROY INVEST",
+    name: "Каталог проектов HUSAM",
     description: "Строительство, ремонт и дизайн интерьеров — портфолио выполненных проектов",
     numberOfItems: projects.length,
     itemListElement,

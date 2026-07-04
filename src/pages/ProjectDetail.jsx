@@ -94,7 +94,7 @@ export default function ProjectDetail() {
   const base = import.meta.env.BASE_URL || "/";
   const catalogPath = base === "/" ? "/catalog" : `${base.replace(/\/$/, "")}/catalog`;
   const shareUrl = `${window.location.origin}${catalogPath}/${project.id}`;
-  const shareText = `Посмотрите проект "${project.title}" от HUSAM STROY INVEST`;
+  const shareText = `Посмотрите проект "${project.title}" от HUSAM`;
 
   const handleShare = (platform) => {
     const url = encodeURIComponent(shareUrl);
@@ -115,7 +115,7 @@ export default function ProjectDetail() {
     <>
       <SeoHead
         title={project.title}
-        description={`${project.title} — ${project.type ?? ""}. ${[project.area, project.location].filter(Boolean).join(", ")}. HUSAM STROY INVEST.`}
+        description={`${project.title} — ${project.type ?? ""}. ${[project.area, project.location].filter(Boolean).join(", ")}. HUSAM.`}
         image={images[0] ?? null}
         url={shareUrl}
       />
@@ -134,7 +134,7 @@ export default function ProjectDetail() {
             name: project.title,
             description: [project.type, project.area, project.location].filter(Boolean).join(", "),
             ...(images[0] && { image: toAbsoluteImageUrl(images[0]) }),
-            author: { "@type": "Organization", name: "HUSAM STROY INVEST" },
+            author: { "@type": "Organization", name: "HUSAM" },
           })}
         </script>
       </Helmet>

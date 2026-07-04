@@ -203,7 +203,7 @@ export default function Projects() {
     <>
       <SeoHead
         title="Готовые проекты на продажу"
-        description="Каталог готовых проектов HUSAM STROY INVEST: с фильтрами, ценами и быстрым запросом на консультацию."
+        description="Каталог готовых проектов HUSAM: с фильтрами, ценами и быстрым запросом на консультацию."
       />
       <BreadcrumbsJsonLd
         items={[

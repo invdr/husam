@@ -1,9 +1,9 @@
 import { Helmet } from "react-helmet-async";
 
-const SITE_NAME = "HUSAM STROY INVEST";
+const SITE_NAME = "HUSAM";
 const DEFAULT_OG_IMAGE = "/husam_og_1.jpg";
 const DEFAULT_DESCRIPTION =
-  "HUSAM STROY INVEST — проектирование, строительство, ремонт и дизайн интерьеров. Рассчитаем смету и выполним работы под ключ: качественно и в срок.";
+  "HUSAM — проектирование, строительство, ремонт и дизайн интерьеров. Рассчитаем смету и выполним работы под ключ: качественно и в срок.";
 
 /**
  * Преобразует путь к изображению в абсолютный URL
