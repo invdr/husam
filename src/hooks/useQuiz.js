@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
 
@@ -60,10 +61,13 @@ export function useQuiz() {
   const fetchQuiz = useCallback(async () => {
     try {
       const filter = `key = "${QUIZ_KEY}"`;
-      const data = await pb
-        .collection("page_content")
-        .getFirstListItem(filter)
-        .catch(() => null);
+      const data = await withRequestTimeout(
+        pb
+          .collection("page_content")
+          .getFirstListItem(filter)
+          .catch(() => null),
+        "quiz fetch"
+      );
       if (!mountedRef.current) return;
       setConfig(parseQuizConfig(data?.value ?? null));
       setError(null);

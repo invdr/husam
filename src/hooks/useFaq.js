@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 import { FAQ_DEFAULTS } from "@/data/faqDefaults";
 
@@ -16,9 +17,12 @@ export function useFaq() {
 
   const fetchFaq = useCallback(async () => {
     try {
-      const data = await pb.collection("faq").getFullList({
-        sort: "sort_order",
-      });
+      const data = await withRequestTimeout(
+        pb.collection("faq").getFullList({
+          sort: "sort_order",
+        }),
+        "faq fetch"
+      );
       if (!mountedRef.current) return;
       const list = data ?? [];
       setItems(list.length > 0 ? list : [...FAQ_DEFAULTS]);

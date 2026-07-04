@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 
 const DEFAULT_KEYS = [
@@ -32,7 +33,10 @@ export function useSiteSettings() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const data = await pb.collection("site_settings").getFullList();
+      const data = await withRequestTimeout(
+        pb.collection("site_settings").getFullList(),
+        "site settings fetch"
+      );
       if (!mountedRef.current) return;
 
       const map = { ...DEFAULTS };

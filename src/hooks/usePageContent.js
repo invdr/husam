@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 import {
   HERO_DEFAULTS,
@@ -42,7 +43,10 @@ export function usePageContent() {
 
   const fetchContent = useCallback(async () => {
     try {
-      const data = await pb.collection("page_content").getFullList();
+      const data = await withRequestTimeout(
+        pb.collection("page_content").getFullList(),
+        "page content fetch"
+      );
       if (!mountedRef.current) return;
 
       const map = { ...DEFAULTS_MAP };

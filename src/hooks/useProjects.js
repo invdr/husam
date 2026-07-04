@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import {
   isPocketbaseAbortError,
   subscribeToPocketbaseCollections,
@@ -79,15 +80,18 @@ export function useProjects() {
     // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
     const seq = ++fetchSeq.current;
     try {
-      const [projectsData, typesData] = await Promise.all([
-        pb.collection("projects").getFullList({
-          sort: "sort_order_in_category",
-          filter: "published = true",
-        }),
-        pb.collection("project_types").getFullList({
-          sort: "sort_order",
-        }),
-      ]);
+      const [projectsData, typesData] = await withRequestTimeout(
+        Promise.all([
+          pb.collection("projects").getFullList({
+            sort: "sort_order_in_category",
+            filter: "published = true",
+          }),
+          pb.collection("project_types").getFullList({
+            sort: "sort_order",
+          }),
+        ]),
+        "projects fetch"
+      );
 
       if (seq !== fetchSeq.current) return;
 

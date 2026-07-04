@@ -63,9 +63,7 @@ export default function Header() {
     e.preventDefault();
     setIsPageLoading(true);
     setIsMenuOpen(false);
-    setTimeout(() => {
-      navigate(path);
-    }, 150);
+    navigate(path);
   };
 
   const handleSignOut = async () => {

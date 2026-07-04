@@ -187,9 +187,7 @@ export default function Portfolio() {
   const handleCatalogClick = (e) => {
     e.preventDefault();
     setIsPageLoading(true);
-    setTimeout(() => {
-      navigate("/catalog");
-    }, 150);
+    navigate("/catalog");
   };
 
   return (

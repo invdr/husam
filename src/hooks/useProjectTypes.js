@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { pb } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 
 const DEFAULT_TYPES = ["Дизайн проекты", "Ремонт", "Строительство"];
@@ -17,9 +18,12 @@ export function useProjectTypes() {
 
   const fetchTypes = useCallback(async () => {
     try {
-      const data = await pb.collection("project_types").getFullList({
-        sort: "sort_order",
-      });
+      const data = await withRequestTimeout(
+        pb.collection("project_types").getFullList({
+          sort: "sort_order",
+        }),
+        "project types fetch"
+      );
       if (!mountedRef.current) return;
 
       const names = (data || [])
