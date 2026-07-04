@@ -1,4 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  isPositiveChoice,
+  normalizeAttachmentChoice,
+  normalizeYesNoChoice,
+  splitSaleProjectRoomExplanation,
+} from "../src/utils/saleProjectFieldStructure.js";
+import {
+  normalizePlotAreaField,
+  normalizeSquareField,
+} from "../src/utils/saleProjectFieldNormalize.js";
 
 const REQUIRED_ENV = [
   "SUPABASE_URL",
@@ -80,19 +90,15 @@ function normalizeProject(row) {
 
 function normalizeSaleProject(row) {
   const baseAttributes = asJsonObject(row.attributes);
+  const explication = splitSaleProjectRoomExplanation(row.room_explanation);
+  const houseArea = toText(row.house_area || row.area);
+  const materialWalls = toText(row.material_walls || row.material);
   return {
     external_id: toText(row.id),
     title: toText(row.title),
     description: row.description ?? "",
-    has_garage: Boolean(row.has_garage),
-    has_canopy: Boolean(row.has_canopy),
-    has_basement: Boolean(row.has_basement),
-    room_explanation: row.room_explanation ?? "",
     type: toText(row.type),
-    area: toText(row.area),
-    rooms: toText(row.rooms),
     floors: toText(row.floors),
-    material: toText(row.material),
     price: toText(row.price),
     old_price: toText(row.old_price),
     construction_price_from: toText(row.construction_price_from),
@@ -105,11 +111,26 @@ function normalizeSaleProject(row) {
     featured: Boolean(row.featured),
     published: row.published !== false,
     attributes: withLegacyImages(baseAttributes, row.images),
-    plot_area: toText(row.plot_area),
-    house_area: toText(row.house_area),
-    usable_area: toText(row.usable_area),
+    plot_area: normalizePlotAreaField(toText(row.plot_area)),
+    house_area: houseArea ? normalizeSquareField(houseArea) : "",
+    usable_area: row.usable_area ? normalizeSquareField(toText(row.usable_area)) : "",
     implementation_period: toText(row.implementation_period),
     house_dimensions: toText(row.house_dimensions),
+    bedrooms: toText(row.bedrooms || row.rooms),
+    garage: normalizeAttachmentChoice(row.garage, Boolean(row.has_garage)),
+    canopy: normalizeAttachmentChoice(row.canopy, Boolean(row.has_canopy)),
+    basement: normalizeYesNoChoice(
+      row.basement,
+      Boolean(row.has_basement) || isPositiveChoice(explication.basement),
+    ),
+    terrace: normalizeYesNoChoice(
+      row.terrace,
+      /террас|веранд/i.test(row.room_explanation ?? ""),
+    ),
+    explication_basement: explication.basement,
+    explication_floor_1: explication.floor_1,
+    explication_floor_2: explication.floor_2,
+    material_walls: materialWalls,
   };
 }
 

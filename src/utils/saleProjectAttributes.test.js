@@ -39,6 +39,18 @@ describe("saleProjectAttributes", () => {
       expect(parseSaleProjectCustomFields(raw)).toEqual([{ key: "my_field", label: "My Field" }]);
     });
 
+    it("отбрасывает старые дубли стандартных полей", () => {
+      const raw = JSON.stringify([
+        { key: "garage_area", label: "Площадь гаража" },
+        { key: "persent_of_sale", label: "Старый дубль" },
+        { key: "ceiling_height", label: "Высота потолков" },
+      ]);
+
+      expect(parseSaleProjectCustomFields(raw)).toEqual([
+        { key: "ceiling_height", label: "Высота потолков" },
+      ]);
+    });
+
     it("отбрасывает элементы без key или с пустым key", () => {
       const raw = '[{"key":"a","label":"A"},{"label":"B"},{"key":"","label":"C"}]';
       expect(parseSaleProjectCustomFields(raw)).toEqual([{ key: "a", label: "A" }]);
@@ -118,11 +130,11 @@ describe("saleProjectAttributes", () => {
 
   describe("getSaleDisplayFields", () => {
     it("включает только поля с непустыми значениями", () => {
-      const project = { rooms: "3", area: "120", floors: "", material: "Кирпич" };
+      const project = { bedrooms: "3", area: "120", floors: "", material: "Кирпич" };
       const fields = getSaleDisplayFields(project);
-      expect(fields.some((f) => f.label === "Комнаты" && f.value === "3")).toBe(true);
+      expect(fields.some((f) => f.label === "Количество спален" && f.value === "3")).toBe(true);
       expect(fields.some((f) => f.label === "Площадь дома" && f.value === "120")).toBe(true);
-      expect(fields.some((f) => f.label === "Материал" && f.value === "Кирпич")).toBe(true);
+      expect(fields.some((f) => f.label === "Стены" && f.value === "Кирпич")).toBe(true);
     });
 
     it("использует house_area, если legacy area пустая", () => {
@@ -148,9 +160,18 @@ describe("saleProjectAttributes", () => {
         },
       });
 
-      expect(fields).toContainEqual({ label: "Материал", value: "Газобетон" });
+      expect(fields).toContainEqual({ label: "Стены", value: "Газобетон" });
       expect(fields.find((f) => f.label === "Фундамент")).toBeUndefined();
       expect(fields.find((f) => f.label === "Кровля")).toBeUndefined();
+    });
+
+    it("считает скидку из старой и текущей стоимости", () => {
+      const fields = getSaleDisplayFields({
+        price: "32 700",
+        oldPrice: "46 800",
+      });
+
+      expect(fields).toContainEqual({ label: "Скидка", value: "30%" });
     });
   });
 

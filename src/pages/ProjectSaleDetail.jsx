@@ -19,6 +19,7 @@ import {
   formatConstructionPrice,
   getConstructionMaterialFields,
   getExplicationSections,
+  formatSaleProjectDiscount,
 } from "@/utils/saleProjectAttributes";
 
 function ProjectGallery({ images, projectTitle }) {
@@ -198,6 +199,7 @@ export default function ProjectSaleDetail() {
   );
   const explicationSections = getExplicationSections(project);
   const constructionMaterialFields = getConstructionMaterialFields(project);
+  const discount = formatSaleProjectDiscount(project.oldPrice, project.price);
 
   return (
     <>
@@ -205,8 +207,8 @@ export default function ProjectSaleDetail() {
         title={title}
         description={
           description
-            ? `${description}. Купить готовый проект от HUSAM STROY INVEST.`
-            : "Готовый проект на продажу от HUSAM STROY INVEST."
+            ? `${description}. Купить готовый проект от HUSAM.`
+            : "Готовый проект на продажу от HUSAM."
         }
         image={images[0] ?? null}
       />
@@ -395,20 +397,27 @@ export default function ProjectSaleDetail() {
 
             <aside className="flex flex-col gap-6 lg:sticky lg:top-24">
               <div className="rounded-2xl border border-brand/20 bg-ink/50 p-5 md:p-6">
-                <div className="mb-3 flex items-center justify-end gap-3">
+                <div className="mb-3 flex items-center justify-start gap-3">
                   <span className="text-xs text-gray-500">ID: {project.id}</span>
                 </div>
-                <div className="text-xs uppercase tracking-wide text-gray-500">
-                  Стоимость
+                <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-gray-500">
+                  <span>Стоимость проекта</span>
+                  {discount ? (
+                    <span className="inline-flex rounded bg-brand/15 px-2.5 py-1 text-sm font-semibold normal-case tracking-normal text-brand">
+                      Скидка {discount}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="mt-1 font-play text-3xl text-white">
-                  {formatPrice(project.price)}
-                </div>
-                {project.oldPrice ? (
-                  <div className="mt-1 text-sm text-gray-500 line-through">
-                    {formatPrice(project.oldPrice)}
+                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <div className="font-play text-3xl text-white">
+                    {formatPrice(project.price)}
                   </div>
-                ) : null}
+                  {project.oldPrice ? (
+                    <div className="text-sm text-gray-500 line-through">
+                      {formatPrice(project.oldPrice)}
+                    </div>
+                  ) : null}
+                </div>
                 {project.constructionPriceFrom && (
                   <div className="mt-3 text-xs text-gray-300">
                     Стоимость строительства от{" "}

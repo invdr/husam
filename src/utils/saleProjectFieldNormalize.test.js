@@ -17,6 +17,19 @@ describe("normalizePlotAreaField", () => {
   });
 
   it("нормализует чисто числовую площадь участка", () => {
-    expect(normalizePlotAreaField("600")).toBe("600 м²");
+    expect(normalizePlotAreaField("6")).toBe("6 соток");
+  });
+
+  it("исправляет ошибочную единицу м² у площади участка", () => {
+    expect(normalizePlotAreaField("6 м²")).toBe("6 соток");
+  });
+
+  it("переводит крупные значения м² в сотки", () => {
+    expect(normalizePlotAreaField("600 м²")).toBe("6 соток");
+    expect(normalizePlotAreaField("252 м²")).toBe("2.52 соток");
+  });
+
+  it("убирает дефис вместо площади участка", () => {
+    expect(normalizePlotAreaField("-")).toBe("");
   });
 });

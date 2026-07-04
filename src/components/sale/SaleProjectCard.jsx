@@ -11,6 +11,7 @@ import {
   formatPrice,
   getSaleCardDisplayFields,
   formatConstructionPrice,
+  formatSaleProjectDiscount,
 } from "@/utils/saleProjectAttributes";
 
 const EMPTY_CUSTOM_FIELD_DEFS = [];
@@ -23,6 +24,7 @@ export default function SaleProjectCard({
   customFieldDefs = EMPTY_CUSTOM_FIELD_DEFS,
 }) {
   const canRequest = typeof onRequestClick === "function";
+  const discount = formatSaleProjectDiscount(project.oldPrice, project.price);
 
   return (
     <Card variant="listing">
@@ -68,17 +70,24 @@ export default function SaleProjectCard({
         <div className="mt-auto border-t border-brand/20 pt-2.5">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                Стоимость проекта
+              <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wide text-gray-500">
+                <span>Стоимость проекта</span>
+                {discount ? (
+                  <span className="inline-flex rounded bg-brand/15 px-2 py-0.5 text-xs font-semibold normal-case tracking-normal text-brand">
+                    Скидка {discount}
+                  </span>
+                ) : null}
               </div>
-              <div className="font-play text-lg text-white">
-                {formatPrice(project.price)}
-              </div>
-              {project.oldPrice ? (
-                <div className="text-xs text-gray-500 line-through">
-                  {formatPrice(project.oldPrice)}
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <div className="font-play text-lg text-white">
+                  {formatPrice(project.price)}
                 </div>
-              ) : null}
+                {project.oldPrice ? (
+                  <div className="text-xs text-gray-500 line-through">
+                    {formatPrice(project.oldPrice)}
+                  </div>
+                ) : null}
+              </div>
               {project.constructionPriceFrom && (
                 <div className="mt-1 text-xs leading-relaxed text-gray-400">
                   Стоимость строительства от{" "}

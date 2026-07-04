@@ -34,15 +34,23 @@ import {
   toComparableNumber,
   SALE_PROJECT_CUSTOM_FIELDS_KEY,
   parseSaleProjectCustomFields,
+  formatSaleProjectDiscount,
 } from "@/utils/saleProjectAttributes";
 import {
   normalizePlotAreaField,
   normalizeSquareField,
 } from "@/utils/saleProjectFieldNormalize";
 import {
-  pickExplicationAndFacetsForSaleProjectForm,
-  syncImportedStructuredSaleProjectAttributes,
+  buildStructuredRoomExplanation,
+  cleanStandardSaleProjectAttributes,
+  pickExtendedSaleProjectFormFields,
 } from "@/utils/saleProjectAdminFormBinding";
+import {
+  ATTACHMENT_CHOICES,
+  YES_NO_CHOICES,
+  normalizeAttachmentChoice,
+  normalizeYesNoChoice,
+} from "@/utils/saleProjectFieldStructure";
 import { resizeImage } from "@/utils/imageResize";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -148,28 +156,20 @@ export default function SaleProjectForm({
   );
   const [showCustomFieldsEditor, setShowCustomFieldsEditor] = useState(false);
 
-  const existingMaterials = useMemo(
-    () => uniqueSorted(existingProjects.map((p) => p.material)),
+  const existingWallMaterials = useMemo(
+    () => uniqueSorted(existingProjects.map((p) => p.material_walls ?? p.material)),
     [existingProjects]
   );
   const existingFloors = useMemo(
     () => uniqueSortedNumeric(existingProjects.map((p) => p.floors)),
     [existingProjects]
   );
-  const existingRooms = useMemo(
-    () => uniqueSortedNumeric(existingProjects.map((p) => p.rooms)),
-    [existingProjects]
-  );
-
   const [form, setForm] = useState({
     id: "",
     title: "",
     description: "",
-    room_explanation: "",
     type: "",
-    rooms: "",
     floors: "",
-    material: "",
     price: "",
     old_price: "",
     construction_price_from: "",
@@ -181,9 +181,23 @@ export default function SaleProjectForm({
     usable_area: "",
     implementation_period: "",
     house_dimensions: "",
-    has_garage: false,
-    has_canopy: false,
-    has_basement: false,
+    style: "",
+    garage: "Нет",
+    canopy: "Нет",
+    basement: "Нет",
+    terrace: "Нет",
+    bedrooms: "",
+    total_built_area: "",
+    note: "",
+    garage_area: "",
+    canopy_area: "",
+    explication_basement: "",
+    explication_floor_1: "",
+    explication_floor_2: "",
+    material_foundation: "",
+    material_walls: "",
+    material_roof: "",
+    material_facade: "",
   });
   const [customFields, setCustomFields] = useState({});
   const [imageFiles, setImageFiles] = useState([]);
@@ -312,17 +326,14 @@ export default function SaleProjectForm({
           ? project.attributes
           : {};
 
-      const facets = pickExplicationAndFacetsForSaleProjectForm(project);
+      const extended = pickExtendedSaleProjectFormFields(project);
 
       return {
         id: project.id ?? "",
         title: project.title ?? "",
         description: project.description ?? "",
-        room_explanation: facets.room_explanation,
         type: project.type ?? (types[0] ?? ""),
-        rooms: project.rooms ?? "",
         floors: project.floors ?? "",
-        material: project.material ?? "",
         price: project.price ?? "",
         old_price: project.old_price ?? project.oldPrice ?? "",
         construction_price_from:
@@ -341,9 +352,7 @@ export default function SaleProjectForm({
           project.implementation_period ?? attrs.implementation_period ?? "",
         house_dimensions:
           project.house_dimensions ?? attrs.house_dimensions ?? "",
-        has_garage: facets.has_garage,
-        has_canopy: facets.has_canopy,
-        has_basement: facets.has_basement,
+        ...extended,
       };
     });
   }, [project, types]);
@@ -469,22 +478,22 @@ export default function SaleProjectForm({
         setSaving(false);
         return;
       }
-      const roomExplanation = (form.room_explanation ?? "").trim();
+      const roomExplanation = buildStructuredRoomExplanation(form);
       if (roomExplanation.length > LIMITS.room_explanation) {
         toast.error(`Экспликация не длиннее ${LIMITS.room_explanation} символов`);
         setSaving(false);
         return;
       }
       const houseArea = (form.house_area ?? "").trim();
-      const rooms = form.rooms.trim();
+      const bedrooms = (form.bedrooms ?? "").trim();
       const floors = form.floors.trim();
-      const material = form.material.trim();
-      if (houseArea.length > LIMITS.area || rooms.length > LIMITS.rooms || floors.length > LIMITS.floors || material.length > LIMITS.material) {
+      const materialWalls = (form.material_walls ?? "").trim();
+      if (houseArea.length > LIMITS.area || bedrooms.length > LIMITS.rooms || floors.length > LIMITS.floors || materialWalls.length > LIMITS.material) {
         const over = [];
         if (houseArea.length > LIMITS.area) over.push(`Площадь дома (${LIMITS.area})`);
-        if (rooms.length > LIMITS.rooms) over.push(`Комнаты (${LIMITS.rooms})`);
+        if (bedrooms.length > LIMITS.rooms) over.push(`Количество спален (${LIMITS.rooms})`);
         if (floors.length > LIMITS.floors) over.push(`Этажи (${LIMITS.floors})`);
-        if (material.length > LIMITS.material) over.push(`Материал (${LIMITS.material})`);
+        if (materialWalls.length > LIMITS.material) over.push(`Стены (${LIMITS.material})`);
         toast.error(`Сократите: ${over.join(", ")} символов`);
         setSaving(false);
         return;
@@ -529,47 +538,30 @@ export default function SaleProjectForm({
         sortOrderInCategory = (existing?.sort_order_in_category ?? -1) + 1;
       }
 
-      const originalFacets = pickExplicationAndFacetsForSaleProjectForm(project);
-      const roomExplanationChanged =
-        isEdit &&
-        roomExplanation !== String(originalFacets.room_explanation ?? "").trim();
-      const existingAttrs = syncImportedStructuredSaleProjectAttributes(
-        project?.attributes,
-        material || null,
-        {
-          hasGarage: !!form.has_garage,
-          hasCanopy: !!form.has_canopy,
-          hasBasement: !!form.has_basement,
-          roomExplanationChanged,
-        },
-      );
+      const existingAttrs = cleanStandardSaleProjectAttributes(project?.attributes);
       const normalizedPlotArea = (form.plot_area ?? "").trim()
         ? normalizePlotAreaField(form.plot_area)
-        : null;
+        : "";
       const normalizedHouseArea = (form.house_area ?? "").trim()
         ? normalizeSquareField(form.house_area)
-        : null;
+        : "";
       const normalizedUsableArea = (form.usable_area ?? "").trim()
         ? normalizeSquareField(form.usable_area)
-        : null;
-      const implementationPeriod = (form.implementation_period ?? "").trim() || null;
-      const houseDimensions = (form.house_dimensions ?? "").trim() || null;
+        : "";
+      const normalizedTotalBuiltArea = (form.total_built_area ?? "").trim()
+        ? normalizeSquareField(form.total_built_area)
+        : "";
+      const implementationPeriod = (form.implementation_period ?? "").trim();
+      const houseDimensions = (form.house_dimensions ?? "").trim();
       const row = {
         external_id: projectId,
         title,
-        description: description || null,
-        room_explanation: roomExplanation || null,
-        has_garage: !!form.has_garage,
-        has_canopy: !!form.has_canopy,
-        has_basement: !!form.has_basement,
+        description: description || "",
         type: form.type,
-        area: houseArea ? normalizeSquareField(form.house_area) : null,
-        rooms: rooms || null,
-        floors: floors || null,
-        material: material || null,
-        price: form.price.trim() || null,
-        old_price: form.old_price.trim() || null,
-        construction_price_from: form.construction_price_from.trim() || null,
+        floors: floors || "",
+        price: form.price.trim() || "",
+        old_price: form.old_price.trim() || "",
+        construction_price_from: form.construction_price_from.trim() || "",
         status: form.status,
         images: existingImageNames,
         published: !!form.published,
@@ -579,13 +571,25 @@ export default function SaleProjectForm({
         usable_area: normalizedUsableArea,
         implementation_period: implementationPeriod,
         house_dimensions: houseDimensions,
+        style: (form.style ?? "").trim(),
+        garage: normalizeAttachmentChoice(form.garage),
+        canopy: normalizeAttachmentChoice(form.canopy),
+        basement: normalizeYesNoChoice(form.basement),
+        terrace: normalizeYesNoChoice(form.terrace),
+        bedrooms,
+        total_built_area: normalizedTotalBuiltArea,
+        note: (form.note ?? "").trim(),
+        garage_area: (form.garage_area ?? "").trim(),
+        canopy_area: (form.canopy_area ?? "").trim(),
+        explication_basement: (form.explication_basement ?? "").trim(),
+        explication_floor_1: (form.explication_floor_1 ?? "").trim(),
+        explication_floor_2: (form.explication_floor_2 ?? "").trim(),
+        material_foundation: (form.material_foundation ?? "").trim(),
+        material_walls: materialWalls,
+        material_roof: (form.material_roof ?? "").trim(),
+        material_facade: (form.material_facade ?? "").trim(),
         attributes: {
           ...existingAttrs,
-          plot_area: normalizedPlotArea,
-          house_area: normalizedHouseArea,
-          usable_area: normalizedUsableArea,
-          implementation_period: implementationPeriod,
-          house_dimensions: houseDimensions,
           ...Object.fromEntries(
             customFieldDefs.map((def) => [
               def.key,
@@ -770,60 +774,182 @@ export default function SaleProjectForm({
         </p>
       </div>
 
-      <div>
-        <label htmlFor="sale-project-room-explanation" className={labelClass}>
-          Экспликация проекта (комната — площадь, по строкам)
-        </label>
-        <textarea
-          id="sale-project-room-explanation"
-          value={form.room_explanation}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, room_explanation: e.target.value }))
-          }
-          placeholder={"Кухня — 18 м²\nГостиная — 32 м²\nСпальня — 16 м²"}
-          maxLength={LIMITS.room_explanation}
-          rows={4}
-          className={`${inputClass} resize-y`}
-        />
-        <p className="form-hint">
-          {(form.room_explanation ?? "").length} / {LIMITS.room_explanation}
-        </p>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div>
+          <label htmlFor="sale-project-explication-basement" className={labelClass}>
+            Экспликация: подвал
+          </label>
+          <textarea
+            id="sale-project-explication-basement"
+            value={form.explication_basement}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, explication_basement: e.target.value }))
+            }
+            placeholder="Котельная — 12 м²"
+            rows={4}
+            className={`${inputClass} resize-y`}
+          />
+        </div>
+        <div>
+          <label htmlFor="sale-project-explication-floor-1" className={labelClass}>
+            Экспликация: 1 этаж
+          </label>
+          <textarea
+            id="sale-project-explication-floor-1"
+            value={form.explication_floor_1}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, explication_floor_1: e.target.value }))
+            }
+            placeholder="Кухня-гостиная — 32 м²"
+            rows={4}
+            className={`${inputClass} resize-y`}
+          />
+        </div>
+        <div>
+          <label htmlFor="sale-project-explication-floor-2" className={labelClass}>
+            Экспликация: 2 этаж
+          </label>
+          <textarea
+            id="sale-project-explication-floor-2"
+            value={form.explication_floor_2}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, explication_floor_2: e.target.value }))
+            }
+            placeholder="Мастер-спальня — 18 м²"
+            rows={4}
+            className={`${inputClass} resize-y`}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-300">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label htmlFor="sale-project-style" className={labelClass}>Стиль</label>
           <input
-            type="checkbox"
-            checked={!!form.has_garage}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, has_garage: e.target.checked }))
-            }
-            className="h-4 w-4 rounded border-brand/40 bg-ink text-brand focus:ring-brand/40"
+            id="sale-project-style"
+            type="text"
+            value={form.style}
+            onChange={(e) => setForm((f) => ({ ...f, style: e.target.value }))}
+            onFocus={selectAllOnFocus}
+            placeholder="Современная классика"
+            className={inputClass}
           />
-          <span>Есть гараж</span>
-        </label>
-        <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-300">
+        </div>
+        <div>
+          <label htmlFor="sale-project-bedrooms" className={labelClass}>Количество спален</label>
           <input
-            type="checkbox"
-            checked={!!form.has_canopy}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, has_canopy: e.target.checked }))
-            }
-            className="h-4 w-4 rounded border-brand/40 bg-ink text-brand focus:ring-brand/40"
+            id="sale-project-bedrooms"
+            type="text"
+            value={form.bedrooms}
+            onChange={(e) => setForm((f) => ({ ...f, bedrooms: e.target.value }))}
+            onFocus={selectAllOnFocus}
+            placeholder="3"
+            className={inputClass}
           />
-          <span>Есть навес</span>
-        </label>
-        <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-300">
+        </div>
+        <div>
+          <label htmlFor="sale-project-terrace" className={labelClass}>Терраса</label>
+          <select
+            id="sale-project-terrace"
+            value={form.terrace}
+            onChange={(e) => setForm((f) => ({ ...f, terrace: e.target.value }))}
+            className={inputClass}
+          >
+            {YES_NO_CHOICES.map((choice) => (
+              <option key={choice} value={choice}>{choice}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sale-project-total-built-area" className={labelClass}>
+            Площадь всех построек
+          </label>
           <input
-            type="checkbox"
-            checked={!!form.has_basement}
+            id="sale-project-total-built-area"
+            type="text"
+            value={form.total_built_area}
             onChange={(e) =>
-              setForm((f) => ({ ...f, has_basement: e.target.checked }))
+              setForm((f) => ({ ...f, total_built_area: e.target.value }))
             }
-            className="h-4 w-4 rounded border-brand/40 bg-ink text-brand focus:ring-brand/40"
+            onFocus={selectAllOnFocus}
+            onBlur={() =>
+              setForm((f) => {
+                const v = (f.total_built_area ?? "").trim();
+                return v
+                  ? { ...f, total_built_area: normalizeSquareField(v) }
+                  : f;
+              })
+            }
+            placeholder="149"
+            className={inputClass}
           />
-          <span>Есть подвал</span>
-        </label>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+          <label htmlFor="sale-project-garage" className={labelClass}>Гараж</label>
+          <select
+            id="sale-project-garage"
+            value={form.garage}
+            onChange={(e) => setForm((f) => ({ ...f, garage: e.target.value }))}
+            className={inputClass}
+          >
+            {ATTACHMENT_CHOICES.map((choice) => (
+              <option key={choice} value={choice}>{choice}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sale-project-canopy" className={labelClass}>Навес</label>
+          <select
+            id="sale-project-canopy"
+            value={form.canopy}
+            onChange={(e) => setForm((f) => ({ ...f, canopy: e.target.value }))}
+            className={inputClass}
+          >
+            {ATTACHMENT_CHOICES.map((choice) => (
+              <option key={choice} value={choice}>{choice}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sale-project-basement" className={labelClass}>Подвал</label>
+          <select
+            id="sale-project-basement"
+            value={form.basement}
+            onChange={(e) => setForm((f) => ({ ...f, basement: e.target.value }))}
+            className={inputClass}
+          >
+            {YES_NO_CHOICES.map((choice) => (
+              <option key={choice} value={choice}>{choice}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sale-project-garage-area" className={labelClass}>Площадь гаража</label>
+          <input
+            id="sale-project-garage-area"
+            type="text"
+            value={form.garage_area}
+            onChange={(e) => setForm((f) => ({ ...f, garage_area: e.target.value }))}
+            onFocus={selectAllOnFocus}
+            placeholder="28,4"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="sale-project-canopy-area" className={labelClass}>Площадь навеса</label>
+          <input
+            id="sale-project-canopy-area"
+            type="text"
+            value={form.canopy_area}
+            onChange={(e) => setForm((f) => ({ ...f, canopy_area: e.target.value }))}
+            onFocus={selectAllOnFocus}
+            placeholder="31,72"
+            className={inputClass}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -922,56 +1048,15 @@ export default function SaleProjectForm({
             className={inputClass}
           />
         </div>
+        <div>
+          <span className={labelClass}>Скидка (авто)</span>
+          <div className="flex min-h-[46px] items-center rounded-xl border border-brand/20 bg-ink px-4 py-2.5 text-white">
+            {formatSaleProjectDiscount(form.old_price, form.price) || "—"}
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label htmlFor={existingRooms.length > 0 ? "sale-project-rooms-select" : "sale-project-rooms"} className={labelClass}>Комнаты</label>
-          {existingRooms.length > 0 ? (
-            <>
-              <select
-                id="sale-project-rooms-select"
-                value={existingRooms.includes(String(form.rooms).trim()) ? form.rooms : OTHER_VALUE}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    rooms: e.target.value === OTHER_VALUE ? "" : e.target.value,
-                  }))
-                }
-                className={inputClass}
-              >
-                {existingRooms.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-                <option value={OTHER_VALUE}>Другое (ввести)</option>
-              </select>
-              {!existingRooms.includes(String(form.rooms).trim()) && (
-                <input
-                  id="sale-project-rooms-other"
-                  type="text"
-                  value={form.rooms}
-                  onChange={(e) => setForm((f) => ({ ...f, rooms: e.target.value }))}
-                  onFocus={selectAllOnFocus}
-                  placeholder="например 3"
-                  maxLength={LIMITS.rooms}
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </>
-          ) : (
-            <input
-              type="text"
-              value={form.rooms}
-              onChange={(e) => setForm((f) => ({ ...f, rooms: e.target.value }))}
-              onFocus={selectAllOnFocus}
-              placeholder="3"
-              maxLength={LIMITS.rooms}
-              className={inputClass}
-            />
-          )}
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={existingFloors.length > 0 ? "sale-project-floors-select" : "sale-project-floors"} className={labelClass}>Этажей</label>
           {existingFloors.length > 0 ? (
@@ -1020,55 +1105,6 @@ export default function SaleProjectForm({
           )}
         </div>
         <div>
-          <label htmlFor={existingMaterials.length > 0 ? "sale-project-material-select" : "sale-project-material"} className={labelClass}>Материал</label>
-          {existingMaterials.length > 0 ? (
-            <>
-              <select
-                id="sale-project-material-select"
-                value={existingMaterials.includes(String(form.material).trim()) ? form.material : OTHER_VALUE}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    material: e.target.value === OTHER_VALUE ? "" : e.target.value,
-                  }))
-                }
-                className={inputClass}
-              >
-                {existingMaterials.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
-                ))}
-                <option value={OTHER_VALUE}>Другое (ввести)</option>
-              </select>
-              {!existingMaterials.includes(String(form.material).trim()) && (
-                <input
-                  id="sale-project-material-other"
-                  type="text"
-                  value={form.material}
-                  onChange={(e) => setForm((f) => ({ ...f, material: e.target.value }))}
-                  onFocus={selectAllOnFocus}
-                  placeholder="например Газоблок"
-                  maxLength={LIMITS.material}
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </>
-          ) : (
-            <input
-              type="text"
-              value={form.material}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, material: e.target.value }))
-              }
-              onFocus={selectAllOnFocus}
-              placeholder="Газоблок"
-              maxLength={LIMITS.material}
-              className={inputClass}
-            />
-          )}
-        </div>
-        <div>
           <label htmlFor="sale-project-construction-price-from" className={labelClass}>
             Стоимость строительства (от)
           </label>
@@ -1089,6 +1125,105 @@ export default function SaleProjectForm({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
+          <label htmlFor="sale-project-material-foundation" className={labelClass}>Тип фундамента</label>
+          <input
+            id="sale-project-material-foundation"
+            type="text"
+            value={form.material_foundation}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, material_foundation: e.target.value }))
+            }
+            onFocus={selectAllOnFocus}
+            placeholder="Ж/Б плита"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor={existingWallMaterials.length > 0 ? "sale-project-material-walls-select" : "sale-project-material-walls"} className={labelClass}>Стены</label>
+          {existingWallMaterials.length > 0 ? (
+            <>
+              <select
+                id="sale-project-material-walls-select"
+                value={
+                  existingWallMaterials.includes(String(form.material_walls).trim())
+                    ? form.material_walls
+                    : OTHER_VALUE
+                }
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    material_walls: e.target.value === OTHER_VALUE ? "" : e.target.value,
+                  }))
+                }
+                className={inputClass}
+              >
+                {existingWallMaterials.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+                <option value={OTHER_VALUE}>Другое (ввести)</option>
+              </select>
+              {!existingWallMaterials.includes(String(form.material_walls).trim()) && (
+                <input
+                  id="sale-project-material-walls-other"
+                  type="text"
+                  value={form.material_walls}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, material_walls: e.target.value }))
+                  }
+                  onFocus={selectAllOnFocus}
+                  placeholder="Газобетонные блоки"
+                  maxLength={LIMITS.material}
+                  className={`${inputClass} mt-2`}
+                />
+              )}
+            </>
+          ) : (
+            <input
+              id="sale-project-material-walls"
+              type="text"
+              value={form.material_walls}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, material_walls: e.target.value }))
+              }
+              onFocus={selectAllOnFocus}
+              placeholder="Газобетонные блоки"
+              maxLength={LIMITS.material}
+              className={inputClass}
+            />
+          )}
+        </div>
+        <div>
+          <label htmlFor="sale-project-material-roof" className={labelClass}>Кровля</label>
+          <input
+            id="sale-project-material-roof"
+            type="text"
+            value={form.material_roof}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, material_roof: e.target.value }))
+            }
+            onFocus={selectAllOnFocus}
+            placeholder="Металлопрофиль"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label htmlFor="sale-project-material-facade" className={labelClass}>Облицовка фасада</label>
+          <input
+            id="sale-project-material-facade"
+            type="text"
+            value={form.material_facade}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, material_facade: e.target.value }))
+            }
+            onFocus={selectAllOnFocus}
+            placeholder="Декоративная штукатурка"
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
           <label htmlFor="sale-project-plot-area" className={labelClass}>Площадь участка</label>
           <input
             id="sale-project-plot-area"
@@ -1102,10 +1237,10 @@ export default function SaleProjectForm({
                 return v ? { ...f, plot_area: normalizePlotAreaField(f.plot_area) } : f;
               })
             }
-            placeholder="600 или 6 соток"
+            placeholder="6 или 6 соток"
             className={inputClass}
           />
-          <p className="form-hint">Число — подставится м²; можно ввести «6 соток»</p>
+          <p className="form-hint">Число — подставится «соток»</p>
         </div>
         <div>
           <label htmlFor="sale-project-house-area" className={labelClass}>Площадь дома</label>
@@ -1173,6 +1308,20 @@ export default function SaleProjectForm({
             className={inputClass}
           />
           <p className="form-hint">Например: 12,6м х 14,6м</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <label htmlFor="sale-project-note" className={labelClass}>Примечание</label>
+          <textarea
+            id="sale-project-note"
+            value={form.note}
+            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+            placeholder="Внутренний комментарий"
+            rows={3}
+            className={`${inputClass} resize-y`}
+          />
         </div>
       </div>
 

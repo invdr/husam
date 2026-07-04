@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { pb, getPocketbaseFileUrl } from "@/lib/pocketbase";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 import {
   isPocketbaseAbortError,
   subscribeToPocketbaseCollections,
 } from "@/hooks/pocketbaseRealtime";
+import {
+  buildStructuredRoomExplanation,
+  isPositiveChoice,
+  normalizeAttachmentChoice,
+  normalizeYesNoChoice,
+  splitSaleProjectRoomExplanation,
+} from "@/utils/saleProjectFieldStructure";
 
 function pickText(...values) {
   for (const value of values) {
@@ -28,25 +36,60 @@ export function normalizeSaleProject(row) {
     typeof attributes.constructionMaterials === "object"
       ? attributes.constructionMaterials
       : {};
+  const topLevelConstructionMaterials = {
+    foundation: pickText(row.material_foundation, constructionMaterials.foundation),
+    walls: pickText(row.material_walls, constructionMaterials.walls, row.material),
+    roof: pickText(row.material_roof, constructionMaterials.roof),
+    facade: pickText(row.material_facade, constructionMaterials.facade),
+  };
   const explication =
     attributes.explication && typeof attributes.explication === "object"
       ? attributes.explication
       : {};
+  const parsedExplication = splitSaleProjectRoomExplanation(row.room_explanation);
+  const topLevelExplication = {
+    basement: pickText(row.explication_basement, explication.basement, parsedExplication.basement),
+    floor_1: pickText(row.explication_floor_1, explication.floor_1, parsedExplication.floor_1),
+    floor_2: pickText(row.explication_floor_2, explication.floor_2, parsedExplication.floor_2),
+  };
+  const roomExplanation = buildStructuredRoomExplanation({
+    explication_basement: topLevelExplication.basement,
+    explication_floor_1: topLevelExplication.floor_1,
+    explication_floor_2: topLevelExplication.floor_2,
+  });
+  const garage = normalizeAttachmentChoice(
+    pickText(row.garage, attributes.garage),
+    !!row.has_garage,
+  );
+  const canopy = normalizeAttachmentChoice(
+    pickText(row.canopy, attributes.canopy),
+    !!row.has_canopy,
+  );
+  const basement = normalizeYesNoChoice(
+    pickText(row.basement, attributes.basement),
+    !!row.has_basement || isPositiveChoice(topLevelExplication.basement),
+  );
+  const terrace = normalizeYesNoChoice(
+    pickText(row.terrace, attributes.terrace),
+    /террас|веранд/i.test(roomExplanation),
+  );
+  const houseArea = pickText(row.house_area, attributes.house_area, row.area);
+  const bedrooms = pickText(row.bedrooms, attributes.bedrooms, row.rooms);
 
   return {
     id: row.external_id ?? row.id,
     recordId: row.recordId ?? row.id,
     title: row.title,
     description: row.description ?? "",
-    hasGarage: !!row.has_garage,
-    hasCanopy: !!row.has_canopy,
-    hasBasement: !!row.has_basement,
-    roomExplanation: row.room_explanation ?? "",
+    hasGarage: garage !== "Нет",
+    hasCanopy: canopy !== "Нет",
+    hasBasement: basement === "Да",
+    roomExplanation,
     type: row.type ?? "",
-    area: row.area ?? "",
-    rooms: row.rooms ?? "",
+    area: houseArea,
+    rooms: bedrooms,
     floors: row.floors ?? "",
-    material: row.material ?? "",
+    material: topLevelConstructionMaterials.walls,
     price: row.price ?? "",
     oldPrice: row.old_price ?? "",
     constructionPriceFrom: row.construction_price_from ?? "",
@@ -57,25 +100,33 @@ export function normalizeSaleProject(row) {
     featured: !!row.featured,
     published: row.published !== false,
     attributes,
-    constructionMaterials,
-    explication,
-    style: pickText(attributes.style),
-    garage: pickText(attributes.garage),
-    canopy: pickText(attributes.canopy),
-    basement: pickText(attributes.basement),
-    bedrooms: pickText(attributes.bedrooms),
-    terrace: pickText(attributes.terrace),
-    total_built_area: pickText(attributes.total_built_area),
-    print_price: pickText(attributes.print_price),
-    discount: pickText(attributes.discount),
+    constructionMaterials: topLevelConstructionMaterials,
+    explication: topLevelExplication,
+    style: pickText(row.style, attributes.style, attributes.house_style),
+    garage,
+    canopy,
+    basement,
+    bedrooms,
+    terrace,
+    total_built_area: pickText(row.total_built_area, attributes.total_built_area),
+    note: pickText(row.note, attributes.note),
+    garage_area: pickText(row.garage_area, attributes.garage_area),
+    canopy_area: pickText(row.canopy_area, attributes.canopy_area, attributes["сanopy_area"]),
     plot_area: pickText(row.plot_area, attributes.plot_area),
-    house_area: pickText(row.house_area, attributes.house_area),
+    house_area: houseArea,
     usable_area: pickText(row.usable_area, attributes.usable_area),
     implementation_period: pickText(
       row.implementation_period,
       attributes.implementation_period
     ),
     house_dimensions: pickText(row.house_dimensions, attributes.house_dimensions),
+    explication_basement: topLevelExplication.basement,
+    explication_floor_1: topLevelExplication.floor_1,
+    explication_floor_2: topLevelExplication.floor_2,
+    material_foundation: topLevelConstructionMaterials.foundation,
+    material_walls: topLevelConstructionMaterials.walls,
+    material_roof: topLevelConstructionMaterials.roof,
+    material_facade: topLevelConstructionMaterials.facade,
   };
 }
 
@@ -99,15 +150,18 @@ export function useSaleProjects() {
     // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
     const seq = ++fetchSeq.current;
     try {
-      const [projectsData, typesData] = await Promise.all([
-        pb.collection("sale_projects").getFullList({
-          sort: "sort_order_in_category",
-          filter: "published = true",
-        }),
-        pb.collection("sale_project_types").getFullList({
-          sort: "sort_order",
-        }),
-      ]);
+      const [projectsData, typesData] = await withRequestTimeout(
+        Promise.all([
+          pb.collection("sale_projects").getFullList({
+            sort: "sort_order_in_category",
+            filter: "published = true",
+          }),
+          pb.collection("sale_project_types").getFullList({
+            sort: "sort_order",
+          }),
+        ]),
+        "sale projects fetch"
+      );
 
       if (seq !== fetchSeq.current) return;
 

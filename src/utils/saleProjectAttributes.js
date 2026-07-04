@@ -9,6 +9,40 @@ const SALE_STATUS_LABELS = {
 /** Ключ в site_settings для списка доп. полей готовых проектов. Значение — JSON массив { key, label }[]. */
 export const SALE_PROJECT_CUSTOM_FIELDS_KEY = "sale_project_custom_fields";
 
+const SUPPRESSED_CUSTOM_FIELD_KEYS = new Set([
+  "canopy_area",
+  "garage_area",
+  "material_summary",
+  "persent_of_sale",
+  "percent_of_sale",
+  "source_photo_url",
+  "style",
+]);
+
+const SUPPRESSED_CUSTOM_FIELD_LABELS = new Set([
+  "материалы: общий",
+  "материалы общий",
+  "площадь гаража",
+  "площадь навеса",
+  "площадь отдельно стоящего навеса",
+  "процент скидки",
+  "ссылка на фотографии",
+  "стиль",
+]);
+
+function normalizeCustomFieldText(value) {
+  return asString(value).trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function isSuppressedSaleProjectCustomField(field) {
+  const key = normalizeCustomFieldText(field?.key).replace(/\s+/g, "_");
+  const label = normalizeCustomFieldText(field?.label);
+  return (
+    SUPPRESSED_CUSTOM_FIELD_KEYS.has(key) ||
+    SUPPRESSED_CUSTOM_FIELD_LABELS.has(label)
+  );
+}
+
 /**
  * Парсит список доп. полей из значения site_settings.
  * @param {string} [raw]
@@ -24,7 +58,8 @@ export function parseSaleProjectCustomFields(raw) {
       .map((item) => ({
         key: String(item.key).trim().replace(/\s+/g, "_"),
         label: typeof item.label === "string" ? item.label.trim() || item.key : String(item.key),
-      }));
+      }))
+      .filter((item) => !isSuppressedSaleProjectCustomField(item));
   } catch {
     return [];
   }
@@ -89,6 +124,18 @@ export function compareSaleProjectPrice(a, b, direction = "asc") {
   return direction === "desc" ? -diff : diff;
 }
 
+export function getSaleProjectDiscountPercent(oldPrice, price) {
+  const oldNumeric = toComparableNumber(oldPrice);
+  const priceNumeric = toComparableNumber(price);
+  if (!oldNumeric || !priceNumeric || oldNumeric <= priceNumeric) return 0;
+  return Math.round(((oldNumeric - priceNumeric) / oldNumeric) * 100);
+}
+
+export function formatSaleProjectDiscount(oldPrice, price) {
+  const percent = getSaleProjectDiscountPercent(oldPrice, price);
+  return percent > 0 ? `${percent}%` : "";
+}
+
 export function getSaleStatusLabel(status) {
   return SALE_STATUS_LABELS[status] ?? "Под заказ";
 }
@@ -101,7 +148,7 @@ export function getSaleStatusClassName(status) {
 }
 
 export function getConstructionMaterialFields(project) {
-  const materials =
+  const legacyMaterials =
     project?.constructionMaterials &&
     typeof project.constructionMaterials === "object"
       ? project.constructionMaterials
@@ -109,27 +156,37 @@ export function getConstructionMaterialFields(project) {
           typeof project.attributes.constructionMaterials === "object"
         ? project.attributes.constructionMaterials
         : {};
+  const materials = {
+    foundation: project?.material_foundation ?? legacyMaterials.foundation,
+    walls: project?.material_walls ?? legacyMaterials.walls ?? project?.material,
+    roof: project?.material_roof ?? legacyMaterials.roof,
+    facade: project?.material_facade ?? legacyMaterials.facade,
+  };
   return [
     { label: "\u0424\u0443\u043d\u0434\u0430\u043c\u0435\u043d\u0442", value: materials.foundation },
     { label: "\u0421\u0442\u0435\u043d\u044b", value: materials.walls ?? project?.material },
     { label: "\u041a\u0440\u043e\u0432\u043b\u044f", value: materials.roof },
     { label: "\u0424\u0430\u0441\u0430\u0434", value: materials.facade },
-    { label: "\u041e\u0431\u0449\u0438\u0439", value: materials.summary },
   ].filter((item) => hasValue(item.value));
 }
 
 export function getExplicationSections(project) {
-  const explication =
+  const legacyExplication =
     project?.explication && typeof project.explication === "object"
       ? project.explication
       : project?.attributes?.explication &&
           typeof project.attributes.explication === "object"
         ? project.attributes.explication
         : {};
+  const explication = {
+    basement: project?.explication_basement ?? legacyExplication.basement,
+    floor_1: project?.explication_floor_1 ?? legacyExplication.floor_1,
+    floor_2: project?.explication_floor_2 ?? legacyExplication.floor_2,
+  };
   return [
-    { title: "\u041f\u043e\u0434\u0432\u0430\u043b", text: explication.basement },
     { title: "1 \u044d\u0442\u0430\u0436", text: explication.floor_1 },
     { title: "2 \u044d\u0442\u0430\u0436", text: explication.floor_2 },
+    { title: "\u041f\u043e\u0434\u0432\u0430\u043b", text: explication.basement },
   ].filter((section) => hasValue(section.text));
 }
 
@@ -144,24 +201,26 @@ export function getSaleDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIE
     return EMPTY_PLACEHOLDER;
   };
   const attrs = project?.attributes && typeof project.attributes === "object" ? project.attributes : {};
+  const discount = formatSaleProjectDiscount(
+    project?.oldPrice ?? project?.old_price,
+    project?.price,
+  );
   const base = [
     { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
-    { label: "\u041a\u043e\u043c\u043d\u0430\u0442\u044b", value: withPlaceholder(project.rooms) },
-    { label: "\u0421\u043f\u0430\u043b\u044c\u043d\u0438", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms) },
+    { label: "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043f\u0430\u043b\u0435\u043d", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms) },
     { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
-    { label: "\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b", value: withPlaceholder(project.material) },
+    { label: "\u0421\u0442\u0435\u043d\u044b", value: withPlaceholder(project.material_walls ?? project.material) },
     { label: "\u0413\u0430\u0440\u0430\u0436", value: withPlaceholder(project.garage ?? attrs.garage) },
     { label: "\u041d\u0430\u0432\u0435\u0441", value: withPlaceholder(project.canopy ?? attrs.canopy) },
     { label: "\u0422\u0435\u0440\u0440\u0430\u0441\u0430", value: withPlaceholder(project.terrace ?? attrs.terrace) },
     { label: "\u041f\u043e\u0434\u0432\u0430\u043b", value: withPlaceholder(project.basement ?? attrs.basement) },
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0443\u0447\u0430\u0441\u0442\u043a\u0430", value: withPlaceholder(project.plot_area) },
-    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: pickDisplayValue(project.area, project.house_area) },
+    { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: pickDisplayValue(project.house_area, project.area) },
     { label: "\u041f\u043e\u043b\u0435\u0437\u043d\u0430\u044f \u043f\u043b\u043e\u0449\u0430\u0434\u044c", value: withPlaceholder(project.usable_area) },
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0432\u0441\u0435\u0445 \u043f\u043e\u0441\u0442\u0440\u043e\u0435\u043a", value: withPlaceholder(project.total_built_area ?? attrs.total_built_area) },
     { label: "\u041e\u0431\u0449\u0438\u0435 \u0440\u0430\u0437\u043c\u0435\u0440\u044b \u0434\u043e\u043c\u0430", value: withPlaceholder(project.house_dimensions) },
     { label: "\u0421\u0440\u043e\u043a \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438", value: withPlaceholder(project.implementation_period) },
-    { label: "\u0421\u043a\u0438\u0434\u043a\u0430", value: withPlaceholder(project.discount ?? attrs.discount) },
-    { label: "\u0426\u0435\u043d\u0430 \u0440\u0430\u0441\u043f\u0435\u0447\u0430\u0442\u043a\u0438", value: withPlaceholder(project.print_price ?? attrs.print_price) },
+    { label: "\u0421\u043a\u0438\u0434\u043a\u0430", value: withPlaceholder(discount) },
   ];
   const custom = customFieldDefs.map((def) => ({
     label: def.label,
@@ -179,7 +238,7 @@ export function getSaleCardDisplayFields(project, customFieldDefs = EMPTY_CUSTOM
   const base = [
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: withPlaceholder(project.house_area || project.area) },
     { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
-    { label: "\u0421\u043f\u0430\u043b\u044c\u043d\u0438", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms ?? project.rooms) },
+    { label: "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043f\u0430\u043b\u0435\u043d", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms ?? project.rooms) },
     { label: "\u0421\u0442\u0435\u043d\u044b", value: withPlaceholder(wallMaterial) },
     { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0443\u0447\u0430\u0441\u0442\u043a\u0430", value: withPlaceholder(project.plot_area) },
@@ -226,7 +285,7 @@ const ROOMS_RANGE_SPECS = [
 export function getFilterMaterialsFromProjects(projects) {
   const set = new Set();
   for (const p of projects || []) {
-    const m = asString(p.material).trim();
+    const m = asString(p.material_walls ?? p.material).trim();
     if (m) set.add(m);
   }
   const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -242,8 +301,9 @@ export function getFilterAreaRangesFromProjects(projects) {
   const list = [{ value: FILTER_ANY, label: "Любая" }];
   for (const spec of AREA_RANGE_SPECS) {
     const hasProject = (projects || []).some((p) => {
-      if (!hasComparableNumber(p.area)) return false;
-      const num = toComparableNumber(p.area);
+      const area = p.house_area ?? p.area;
+      if (!hasComparableNumber(area)) return false;
+      const num = toComparableNumber(area);
       return num >= spec.min && (spec.max >= 9999 || num <= spec.max);
     });
     if (hasProject) list.push({ value: spec.value, label: spec.label });
@@ -280,8 +340,9 @@ export function getFilterRoomsFromProjects(projects) {
   const list = [{ value: FILTER_ANY, label: "Любое" }];
   for (const spec of ROOMS_RANGE_SPECS) {
     const hasProject = (projects || []).some((p) => {
-      if (!hasComparableNumber(p.rooms)) return false;
-      const num = toComparableNumber(p.rooms);
+      const rooms = p.bedrooms ?? p.rooms;
+      if (!hasComparableNumber(rooms)) return false;
+      const num = toComparableNumber(rooms);
       return num >= spec.min && num <= spec.max;
     });
     if (hasProject) list.push({ value: spec.value, label: spec.label });
@@ -296,8 +357,9 @@ export function getFilterRoomsFromProjects(projects) {
  */
 export function matchAreaFilter(project, rangeValue) {
   if (!rangeValue) return true;
-  if (!hasComparableNumber(project.area)) return false;
-  const num = toComparableNumber(project.area);
+  const area = project.house_area ?? project.area;
+  if (!hasComparableNumber(area)) return false;
+  const num = toComparableNumber(area);
   const [min, max] = rangeValue.split("-").map(Number);
   if (min != null && num < min) return false;
   if (max != null && num > max) return false;
@@ -332,8 +394,9 @@ export function matchFloorsFilter(project, filterValue) {
  */
 export function matchRoomsFilter(project, rangeValue) {
   if (!rangeValue) return true;
-  if (!hasComparableNumber(project.rooms)) return false;
-  const num = toComparableNumber(project.rooms);
+  const rooms = project.bedrooms ?? project.rooms;
+  if (!hasComparableNumber(rooms)) return false;
+  const num = toComparableNumber(rooms);
   const [min, max] = rangeValue.split("-").map(Number);
   if (min != null && num < min) return false;
   if (max != null && num > max) return false;
@@ -347,7 +410,7 @@ export function matchRoomsFilter(project, rangeValue) {
  */
 export function matchMaterialFilter(project, filterValue) {
   if (!filterValue) return true;
-  const m = asString(project.material).trim().toLowerCase();
+  const m = asString(project.material_walls ?? project.material).trim().toLowerCase();
   const need = filterValue.toLowerCase();
   return m === need || m.includes(need);
 }
