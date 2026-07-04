@@ -604,6 +604,171 @@
     "options": {}
   },
   {
+    "name": "sale_project_styles",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "system": false
+      },
+      {
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_styles_sort_order ON sale_project_styles (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_project_foundation_types",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "system": false
+      },
+      {
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_foundation_types_sort_order ON sale_project_foundation_types (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_project_wall_materials",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "system": false
+      },
+      {
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_wall_materials_sort_order ON sale_project_wall_materials (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_project_roof_materials",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "system": false
+      },
+      {
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_roof_materials_sort_order ON sale_project_roof_materials (sort_order)"
+    ],
+    "options": {}
+  },
+  {
+    "name": "sale_project_facade_materials",
+    "type": "base",
+    "system": false,
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "system": false
+      },
+      {
+        "name": "sort_order",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "noDecimal": true
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_sale_project_facade_materials_sort_order ON sale_project_facade_materials (sort_order)"
+    ],
+    "options": {}
+  },
+  {
     "name": "site_settings",
     "type": "base",
     "system": false,

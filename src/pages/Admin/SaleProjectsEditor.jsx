@@ -19,7 +19,9 @@ import { normalizeSaleProject } from "@/hooks/useSaleProjects";
 import Icon from "@/components/common/Icon";
 import { ConfirmModal, Pagination } from "@/components/common";
 import { useSaleProjectTypes } from "@/hooks/useSaleProjectTypes";
+import { useSaleProjectOptionDictionaries } from "@/hooks/useSaleProjectOptionDictionaries";
 import SaleProjectForm from "@/components/admin/SaleProjectForm";
+import SaleProjectDictionariesEditor from "@/components/admin/SaleProjectDictionariesEditor";
 import SaleTypesEditor from "@/components/admin/SaleTypesEditor";
 import SortableSaleProjectCard from "@/components/admin/SortableSaleProjectCard";
 import SaleProjectsImportModal from "@/components/admin/SaleProjectsImportModal";
@@ -36,9 +38,14 @@ export default function SaleProjectsEditor() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [showTypesEditor, setShowTypesEditor] = useState(false);
+  const [showDictionariesEditor, setShowDictionariesEditor] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [collapsedSections, setCollapsedSections] = useState(() => new Set());
   const { types, refetch: refetchTypes } = useSaleProjectTypes();
+  const {
+    options: optionDictionaries,
+    refetch: refetchOptionDictionaries,
+  } = useSaleProjectOptionDictionaries(projects);
 
   const toggleSection = (sectionId) => {
     setCollapsedSections((prev) => {
@@ -262,6 +269,7 @@ export default function SaleProjectsEditor() {
         key={editing?.id ?? "new"}
         project={editing}
         existingProjects={existingProjects}
+        optionDictionaries={optionDictionaries}
         onSave={(savedProject) => {
           setEditing(null);
           setShowForm(false);
@@ -303,6 +311,12 @@ export default function SaleProjectsEditor() {
             className="rounded-xl border border-brand/30 px-4 py-2 text-sm text-gray-300 transition-colors hover:border-brand hover:text-white"
           >
             Категории
+          </button>
+          <button
+            onClick={() => setShowDictionariesEditor(true)}
+            className="rounded-xl border border-brand/30 px-4 py-2 text-sm text-gray-300 transition-colors hover:border-brand hover:text-white"
+          >
+            Справочники
           </button>
           {projects.length > 0 && filteredProjects.length > 0 && allSectionIds.length > 0 && (
             <button
@@ -525,6 +539,18 @@ export default function SaleProjectsEditor() {
           types={types}
           onClose={() => setShowTypesEditor(false)}
           onUpdate={refetchTypes}
+        />
+      )}
+
+      {showDictionariesEditor && (
+        <SaleProjectDictionariesEditor
+          key={JSON.stringify(optionDictionaries)}
+          dictionaries={optionDictionaries}
+          onClose={() => setShowDictionariesEditor(false)}
+          onUpdate={async () => {
+            await refetchOptionDictionaries();
+            await fetchProjects();
+          }}
         />
       )}
 

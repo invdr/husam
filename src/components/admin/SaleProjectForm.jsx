@@ -100,15 +100,6 @@ const STATUSES = [
 const OTHER_VALUE = "__other__";
 const EMPTY_EXISTING_PROJECTS = [];
 
-function uniqueSorted(items) {
-  const set = new Set();
-  for (const p of items || []) {
-    const v = String(p ?? "").trim();
-    if (v) set.add(v);
-  }
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}
-
 function uniqueSortedNumeric(items) {
   const set = new Set();
   for (const p of items || []) {
@@ -140,11 +131,95 @@ function SortableThumb({ id, children, className = "" }) {
   );
 }
 
+function DictionarySelectField({
+  id,
+  label,
+  value,
+  options,
+  placeholder,
+  inputClass,
+  labelClass,
+  selectAllOnFocus,
+  onChange,
+}) {
+  const trimmedValue = String(value ?? "").trim();
+  const hasValueInOptions = options.includes(trimmedValue);
+  const [showOtherInput, setShowOtherInput] = useState(false);
+
+  useEffect(() => {
+    setShowOtherInput(!!trimmedValue && !hasValueInOptions);
+  }, [hasValueInOptions, trimmedValue]);
+
+  if (options.length === 0) {
+    return (
+      <div>
+        <label htmlFor={id} className={labelClass}>{label}</label>
+        <input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={selectAllOnFocus}
+          placeholder={placeholder}
+          className={inputClass}
+        />
+      </div>
+    );
+  }
+
+  const selectValue = showOtherInput
+    ? OTHER_VALUE
+    : hasValueInOptions
+      ? trimmedValue
+      : "";
+
+  return (
+    <div>
+      <label htmlFor={`${id}-select`} className={labelClass}>{label}</label>
+      <select
+        id={`${id}-select`}
+        value={selectValue}
+        onChange={(e) => {
+          const nextValue = e.target.value;
+          if (nextValue === OTHER_VALUE) {
+            setShowOtherInput(true);
+            onChange("");
+            return;
+          }
+          setShowOtherInput(false);
+          onChange(nextValue);
+        }}
+        className={inputClass}
+      >
+        <option value="">Не выбрано</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+        <option value={OTHER_VALUE}>Другое (ввести)</option>
+      </select>
+      {showOtherInput && (
+        <input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={selectAllOnFocus}
+          placeholder={placeholder}
+          className={`${inputClass} mt-2`}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function SaleProjectForm({
   project,
   onSave,
   onCancel,
   existingProjects = EMPTY_EXISTING_PROJECTS,
+  optionDictionaries = {},
 }) {
   const isEdit = !!project;
   const { types, refetch } = useSaleProjectTypes();
@@ -156,10 +231,6 @@ export default function SaleProjectForm({
   );
   const [showCustomFieldsEditor, setShowCustomFieldsEditor] = useState(false);
 
-  const existingWallMaterials = useMemo(
-    () => uniqueSorted(existingProjects.map((p) => p.material_walls ?? p.material)),
-    [existingProjects]
-  );
   const existingFloors = useMemo(
     () => uniqueSortedNumeric(existingProjects.map((p) => p.floors)),
     [existingProjects]
@@ -824,15 +895,16 @@ export default function SaleProjectForm({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label htmlFor="sale-project-style" className={labelClass}>Стиль</label>
-          <input
+          <DictionarySelectField
             id="sale-project-style"
-            type="text"
+            label="Стиль"
             value={form.style}
-            onChange={(e) => setForm((f) => ({ ...f, style: e.target.value }))}
-            onFocus={selectAllOnFocus}
+            options={optionDictionaries.style ?? []}
+            onChange={(value) => setForm((f) => ({ ...f, style: value }))}
             placeholder="Современная классика"
-            className={inputClass}
+            inputClass={inputClass}
+            labelClass={labelClass}
+            selectAllOnFocus={selectAllOnFocus}
           />
         </div>
         <div>
@@ -1124,102 +1196,58 @@ export default function SaleProjectForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <label htmlFor="sale-project-material-foundation" className={labelClass}>Тип фундамента</label>
-          <input
-            id="sale-project-material-foundation"
-            type="text"
-            value={form.material_foundation}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, material_foundation: e.target.value }))
-            }
-            onFocus={selectAllOnFocus}
-            placeholder="Ж/Б плита"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor={existingWallMaterials.length > 0 ? "sale-project-material-walls-select" : "sale-project-material-walls"} className={labelClass}>Стены</label>
-          {existingWallMaterials.length > 0 ? (
-            <>
-              <select
-                id="sale-project-material-walls-select"
-                value={
-                  existingWallMaterials.includes(String(form.material_walls).trim())
-                    ? form.material_walls
-                    : OTHER_VALUE
-                }
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    material_walls: e.target.value === OTHER_VALUE ? "" : e.target.value,
-                  }))
-                }
-                className={inputClass}
-              >
-                {existingWallMaterials.map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-                <option value={OTHER_VALUE}>Другое (ввести)</option>
-              </select>
-              {!existingWallMaterials.includes(String(form.material_walls).trim()) && (
-                <input
-                  id="sale-project-material-walls-other"
-                  type="text"
-                  value={form.material_walls}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, material_walls: e.target.value }))
-                  }
-                  onFocus={selectAllOnFocus}
-                  placeholder="Газобетонные блоки"
-                  maxLength={LIMITS.material}
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </>
-          ) : (
-            <input
-              id="sale-project-material-walls"
-              type="text"
-              value={form.material_walls}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, material_walls: e.target.value }))
-              }
-              onFocus={selectAllOnFocus}
-              placeholder="Газобетонные блоки"
-              maxLength={LIMITS.material}
-              className={inputClass}
-            />
-          )}
-        </div>
-        <div>
-          <label htmlFor="sale-project-material-roof" className={labelClass}>Кровля</label>
-          <input
-            id="sale-project-material-roof"
-            type="text"
-            value={form.material_roof}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, material_roof: e.target.value }))
-            }
-            onFocus={selectAllOnFocus}
-            placeholder="Металлопрофиль"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="sale-project-material-facade" className={labelClass}>Облицовка фасада</label>
-          <input
-            id="sale-project-material-facade"
-            type="text"
-            value={form.material_facade}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, material_facade: e.target.value }))
-            }
-            onFocus={selectAllOnFocus}
-            placeholder="Декоративная штукатурка"
-            className={inputClass}
-          />
-        </div>
+        <DictionarySelectField
+          id="sale-project-material-foundation"
+          label="Тип фундамента"
+          value={form.material_foundation}
+          options={optionDictionaries.material_foundation ?? []}
+          onChange={(value) =>
+            setForm((f) => ({ ...f, material_foundation: value }))
+          }
+          placeholder="Ленточный"
+          inputClass={inputClass}
+          labelClass={labelClass}
+          selectAllOnFocus={selectAllOnFocus}
+        />
+        <DictionarySelectField
+          id="sale-project-material-walls"
+          label="Стены"
+          value={form.material_walls}
+          options={optionDictionaries.material_walls ?? []}
+          onChange={(value) =>
+            setForm((f) => ({ ...f, material_walls: value }))
+          }
+          placeholder="Газобетонные блоки"
+          inputClass={inputClass}
+          labelClass={labelClass}
+          selectAllOnFocus={selectAllOnFocus}
+        />
+        <DictionarySelectField
+          id="sale-project-material-roof"
+          label="Кровля"
+          value={form.material_roof}
+          options={optionDictionaries.material_roof ?? []}
+          onChange={(value) =>
+            setForm((f) => ({ ...f, material_roof: value }))
+          }
+          placeholder="Металлочерепица"
+          inputClass={inputClass}
+          labelClass={labelClass}
+          selectAllOnFocus={selectAllOnFocus}
+        />
+        <DictionarySelectField
+          id="sale-project-material-facade"
+          label="Облицовка фасада"
+          value={form.material_facade}
+          options={optionDictionaries.material_facade ?? []}
+          onChange={(value) =>
+            setForm((f) => ({ ...f, material_facade: value }))
+          }
+          placeholder="Декоративная штукатурка"
+          inputClass={inputClass}
+          labelClass={labelClass}
+          selectAllOnFocus={selectAllOnFocus}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -973,6 +973,386 @@
     "system": false
   },
   {
+    "id": "col_spstyles01",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "name": "sale_project_styles",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "pstyle_id001",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pstyle_nm001",
+        "max": 255,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "pstyle_so001",
+        "max": null,
+        "min": null,
+        "name": "sort_order",
+        "onlyInt": true,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "pstyle_cr001",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "pstyle_up001",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_sale_project_styles_sort_order` ON `sale_project_styles` (`sort_order`)"
+    ],
+    "system": false
+  },
+  {
+    "id": "col_spfound01",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "name": "sale_project_foundation_types",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "pfound_id001",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pfound_nm001",
+        "max": 255,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "pfound_so001",
+        "max": null,
+        "min": null,
+        "name": "sort_order",
+        "onlyInt": true,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "pfound_cr001",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "pfound_up001",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_sale_project_foundation_types_sort_order` ON `sale_project_foundation_types` (`sort_order`)"
+    ],
+    "system": false
+  },
+  {
+    "id": "col_spwalls01",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "name": "sale_project_wall_materials",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "pwalls_id001",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pwalls_nm001",
+        "max": 255,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "pwalls_so001",
+        "max": null,
+        "min": null,
+        "name": "sort_order",
+        "onlyInt": true,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "pwalls_cr001",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "pwalls_up001",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_sale_project_wall_materials_sort_order` ON `sale_project_wall_materials` (`sort_order`)"
+    ],
+    "system": false
+  },
+  {
+    "id": "col_sproof001",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "name": "sale_project_roof_materials",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "proof_id001",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "proof_nm001",
+        "max": 255,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "proof_so001",
+        "max": null,
+        "min": null,
+        "name": "sort_order",
+        "onlyInt": true,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "proof_cr001",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "proof_up001",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_sale_project_roof_materials_sort_order` ON `sale_project_roof_materials` (`sort_order`)"
+    ],
+    "system": false
+  },
+  {
+    "id": "col_spfacade1",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": "@request.auth.id != ''",
+    "name": "sale_project_facade_materials",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "pfacade_id001",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pfacade_nm001",
+        "max": 255,
+        "min": 1,
+        "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "pfacade_so001",
+        "max": null,
+        "min": null,
+        "name": "sort_order",
+        "onlyInt": true,
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "number"
+      },
+      {
+        "hidden": false,
+        "id": "pfacade_cr001",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "pfacade_up001",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX `idx_sale_project_facade_materials_sort_order` ON `sale_project_facade_materials` (`sort_order`)"
+    ],
+    "system": false
+  },
+  {
     "id": "col_settngs001",
     "listRule": "",
     "viewRule": "",
