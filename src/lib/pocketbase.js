@@ -1,9 +1,12 @@
 import PocketBase from "pocketbase";
 
-const pocketbaseUrl = import.meta.env.VITE_POCKETBASE_URL;
+const DEFAULT_POCKETBASE_URL = "https://api.husam.ru";
+const pocketbaseUrl = import.meta.env.VITE_POCKETBASE_URL || DEFAULT_POCKETBASE_URL;
 
-if (!pocketbaseUrl) {
-  console.warn("PocketBase: VITE_POCKETBASE_URL не задан. Проверьте .env");
+if (!import.meta.env.VITE_POCKETBASE_URL) {
+  console.warn(
+    `PocketBase: VITE_POCKETBASE_URL не задан. Используется ${DEFAULT_POCKETBASE_URL}`
+  );
 }
 
 export const pb = new PocketBase(pocketbaseUrl);
