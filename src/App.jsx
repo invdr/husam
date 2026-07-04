@@ -15,6 +15,7 @@ import PageLoader from "@/components/common/PageLoader";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import ScrollRestoration from "@/components/common/ScrollRestoration";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import CookieConsentBanner from "@/components/common/CookieConsentBanner";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 // Главная страница
@@ -155,6 +156,7 @@ function App() {
           </main>
           <Footer />
           <ScrollToTop />
+          <CookieConsentBanner />
           <PageLoader />
           <Toaster richColors position="top-center" />
         </div>
