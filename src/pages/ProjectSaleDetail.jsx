@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import Lightbox from "yet-another-react-lightbox";
 import { Thumbnails, Zoom } from "yet-another-react-lightbox/plugins";
 import "yet-another-react-lightbox/styles.css";
@@ -134,11 +134,15 @@ function ProjectGallery({ images, projectTitle }) {
 
 export default function ProjectSaleDetail() {
   const { projectId } = useParams();
+  const location = useLocation();
   const { projects, loading } = useSaleProjects();
   const { settings } = useSiteSettings();
   const customFieldDefs = parseSaleProjectCustomFields(settings[SALE_PROJECT_CUSTOM_FIELDS_KEY]);
   const project = projects.find((item) => item.id === projectId);
   const images = project?.images?.length ? project.images : [];
+  const projectsBackPath = location.search
+    ? `/projects${location.search}`
+    : "/projects";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -178,7 +182,7 @@ export default function ProjectSaleDetail() {
             Возможно, карточка удалена или ссылка устарела.
           </p>
           <Link
-            to="/projects"
+            to={projectsBackPath}
             className="mt-8 inline-flex items-center gap-2 rounded-xl border border-brand bg-transparent px-6 py-3 text-brand transition-colors hover:bg-brand hover:text-ink"
           >
             <Icon name="arrow-left" className="h-4 w-4" />
@@ -233,7 +237,7 @@ export default function ProjectSaleDetail() {
                 <Icon name="chevron-right" className="h-4 w-4 opacity-60" />
               </li>
               <li className="shrink-0">
-                <Link to="/projects" className="transition-colors hover:text-brand">
+                <Link to={projectsBackPath} className="transition-colors hover:text-brand">
                   Проекты
                 </Link>
               </li>
@@ -488,7 +492,7 @@ export default function ProjectSaleDetail() {
                   Задать вопрос
                 </button>
                 <Link
-                  to="/projects"
+                  to={projectsBackPath}
                   className="inline-flex items-center justify-center gap-2 text-sm text-gray-400 transition-colors hover:text-brand"
                 >
                   <Icon name="arrow-left" className="h-4 w-4" />

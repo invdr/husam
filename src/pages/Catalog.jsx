@@ -27,16 +27,39 @@ function resolveTypeParam(urlType) {
   return TYPE_ALIASES[urlType] ?? urlType;
 }
 
-// Компонент с ключом по фильтру/сортировке — при смене remount, currentPage сбрасывается в 1
+function parsePageParam(searchParams) {
+  const pageParam = searchParams.get("page");
+  if (!pageParam || !/^\d+$/.test(pageParam)) return 1;
+
+  const page = Number(pageParam);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
+
+function buildCatalogSearchParams({ activeFilter, sortBy, page, project }) {
+  const params = new URLSearchParams();
+  params.set("type", activeFilter === ALL_FILTER ? "all" : activeFilter);
+  if (sortBy !== CATALOG_SORT_DEFAULT) params.set("sort", sortBy);
+  if (page > 1) params.set("page", String(page));
+  if (project) params.set("project", project);
+  return params;
+}
+
+function getSearchSuffix(params) {
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
+
 function CatalogPaginatedList({
   filteredAndSortedProjects,
   pageSize,
   navigate,
+  page,
+  onPageChange,
   onPageReport,
+  detailSearch,
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredAndSortedProjects.length / pageSize);
-  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
+  const currentPageSafe = Math.min(page, Math.max(totalPages, 1));
   const paginatedProjects =
     totalPages > 1
       ? filteredAndSortedProjects.slice(
@@ -46,8 +69,8 @@ function CatalogPaginatedList({
       : filteredAndSortedProjects;
 
   useEffect(() => {
-    if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
-  }, [currentPage, currentPageSafe]);
+    if (page !== currentPageSafe) onPageChange(currentPageSafe);
+  }, [page, currentPageSafe, onPageChange]);
 
   useEffect(() => {
     onPageReport?.(currentPageSafe);
@@ -61,9 +84,10 @@ function CatalogPaginatedList({
             key={project.id}
             role="button"
             tabIndex={0}
-            onClick={() => navigate(`/catalog/${project.id}`)}
+            onClick={() => navigate(`/catalog/${project.id}${detailSearch}`)}
             onKeyDown={(e) =>
-              e.key === "Enter" && navigate(`/catalog/${project.id}`)
+              e.key === "Enter" &&
+              navigate(`/catalog/${project.id}${detailSearch}`)
             }
             className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink rounded-2xl"
           >
@@ -77,7 +101,7 @@ function CatalogPaginatedList({
             page={currentPageSafe}
             totalPages={totalPages}
             onPageChange={(p) => {
-              setCurrentPage(p);
+              onPageChange(p);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
@@ -99,7 +123,19 @@ export default function Catalog() {
   const [activeFilter, setActiveFilter] = useState(() =>
     resolveTypeParam(searchParams.get("type"))
   );
+  const [currentPage, setCurrentPage] = useState(() =>
+    parsePageParam(searchParams)
+  );
   const [reportedPage, setReportedPage] = useState(1);
+
+  useEffect(() => {
+    const urlType = resolveTypeParam(searchParams.get("type"));
+    setActiveFilter((prev) => (prev === urlType ? prev : urlType));
+    setCurrentPage((prev) => {
+      const urlPage = parsePageParam(searchParams);
+      return prev === urlPage ? prev : urlPage;
+    });
+  }, [searchParams]);
 
   // Синхронизация activeFilter при загрузке types (если URL содержит несуществующий тип)
   useEffect(() => {
@@ -110,6 +146,7 @@ export default function Catalog() {
     ) {
       const urlType = resolveTypeParam(searchParams.get("type"));
       setActiveFilter(types.includes(urlType) ? urlType : ALL_FILTER);
+      setCurrentPage(1);
     }
   }, [types, activeFilter, searchParams]);
 
@@ -119,25 +156,32 @@ export default function Catalog() {
     setSortBy((prev) => (prev === urlSort ? prev : urlSort));
   }, [searchParams]);
 
-  // Синхронизация URL: type + sort (как на /projects), сохраняем ?project= для редиректа
+  // Синхронизация URL: type + sort + page (как на /projects), сохраняем ?project= для редиректа
   useEffect(() => {
     if (!activeFilter) return;
-    const typeParam = activeFilter === ALL_FILTER ? "all" : activeFilter;
     const project = searchParams.get("project");
-    const params = { type: typeParam };
-    if (sortBy !== CATALOG_SORT_DEFAULT) params.sort = sortBy;
-    if (project) params.project = project;
+    const params = buildCatalogSearchParams({
+      activeFilter,
+      sortBy,
+      page: currentPage,
+      project,
+    });
+    if (searchParams.toString() === params.toString()) return;
     setSearchParams(params, { replace: true });
     // searchParams намеренно не в deps: иначе цикл после setSearchParams (новый объект URLSearchParams).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilter, sortBy, setSearchParams]);
+  }, [activeFilter, sortBy, currentPage, setSearchParams]);
 
   // Редирект со старого URL ?project=ID на /catalog/ID
   useEffect(() => {
     if (loading || projects.length === 0) return;
     const projectId = searchParams.get("project");
     if (projectId && projects.some((p) => p.id === projectId)) {
-      navigate(`/catalog/${projectId}`, { replace: true });
+      const params = new URLSearchParams(searchParams);
+      params.delete("project");
+      navigate(`/catalog/${projectId}${getSearchSuffix(params)}`, {
+        replace: true,
+      });
     }
   }, [loading, projects, searchParams, navigate]);
 
@@ -180,6 +224,10 @@ export default function Catalog() {
     filteredAndSortedProjects.length / PAGE_SIZE
   );
   const showPagination = totalPages > 1;
+  const currentPageSafe = Math.min(currentPage, Math.max(totalPages, 1));
+  const detailSearch = getSearchSuffix(
+    buildCatalogSearchParams({ activeFilter, sortBy, page: currentPageSafe })
+  );
 
   return (
     <>
@@ -223,7 +271,10 @@ export default function Catalog() {
                 {/* Вкладки фильтров */}
                 <div className="flex flex-wrap gap-1.5 md:gap-3">
                   <button
-                    onClick={() => setActiveFilter(ALL_FILTER)}
+                    onClick={() => {
+                      setActiveFilter(ALL_FILTER);
+                      setCurrentPage(1);
+                    }}
                     className={
                       "rounded-lg md:rounded-xl px-2 py-1 md:px-4 md:py-2.5 text-xs md:text-sm font-medium transition-all " +
                       (activeFilter === ALL_FILTER
@@ -236,7 +287,10 @@ export default function Catalog() {
                   {types.map((tab) => (
                     <button
                       key={tab}
-                      onClick={() => setActiveFilter(tab)}
+                      onClick={() => {
+                        setActiveFilter(tab);
+                        setCurrentPage(1);
+                      }}
                       className={
                         "rounded-lg md:rounded-xl px-2 py-1 md:px-4 md:py-2.5 text-xs md:text-sm font-medium transition-all " +
                         (activeFilter === tab
@@ -286,9 +340,10 @@ export default function Catalog() {
                   <select
                     id="catalog-sort"
                     value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(normalizeCatalogSortParam(e.target.value))
-                    }
+                    onChange={(e) => {
+                      setSortBy(normalizeCatalogSortParam(e.target.value));
+                      setCurrentPage(1);
+                    }}
                     className="rounded-lg md:rounded-xl border border-brand/30 bg-ink px-2 py-1.5 md:px-4 md:py-2.5 text-xs md:text-sm text-white focus:border-brand focus:outline-none"
                     aria-label="Сортировка каталога работ"
                   >
@@ -314,11 +369,13 @@ export default function Catalog() {
             </div>
           ) : filteredAndSortedProjects.length > 0 ? (
             <CatalogPaginatedList
-              key={`${activeFilter}-${sortBy}`}
               filteredAndSortedProjects={filteredAndSortedProjects}
               pageSize={PAGE_SIZE}
               navigate={navigate}
+              page={currentPage}
+              onPageChange={setCurrentPage}
               onPageReport={setReportedPage}
+              detailSearch={detailSearch}
             />
           ) : (
             <div className="py-16 text-center">

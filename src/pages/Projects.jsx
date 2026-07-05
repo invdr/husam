@@ -47,7 +47,15 @@ function parseFacetFiltersFromSearchParams(searchParams) {
   };
 }
 
-function buildProjectsSearchParams(controls, facetFilters) {
+function parsePageParam(searchParams) {
+  const pageParam = searchParams.get("page");
+  if (!pageParam || !/^\d+$/.test(pageParam)) return 1;
+
+  const page = Number(pageParam);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
+
+function buildProjectsSearchParams(controls, facetFilters, page = 1) {
   const params = {
     type: controls.activeFilter === ALL_FILTER ? "all" : controls.activeFilter,
     sort: controls.sortBy,
@@ -59,6 +67,7 @@ function buildProjectsSearchParams(controls, facetFilters) {
   if (facetFilters.garage) params.garage = "1";
   if (facetFilters.canopy) params.canopy = "1";
   if (facetFilters.basement) params.basement = "1";
+  if (page > 1) params.page = String(page);
   return params;
 }
 
@@ -83,7 +92,9 @@ export default function Projects() {
     parseFacetFiltersFromSearchParams(searchParams)
   );
   const [mobileAdvancedFiltersOpen, setMobileAdvancedFiltersOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() =>
+    parsePageParam(searchParams)
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -96,7 +107,7 @@ export default function Projects() {
     skipNextSearchWriteRef.current = true;
     setControls(parseControlsFromSearchParams(searchParams));
     setFacetFilters(parseFacetFiltersFromSearchParams(searchParams));
-    setCurrentPage(1);
+    setCurrentPage(parsePageParam(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
@@ -107,7 +118,11 @@ export default function Projects() {
       return;
     }
 
-    const params = buildProjectsSearchParams(controls, facetFilters);
+    const params = buildProjectsSearchParams(
+      controls,
+      facetFilters,
+      currentPage,
+    );
     const nextSearch = paramsToString(params);
     if (searchParams.toString() === nextSearch) {
       lastWrittenSearchRef.current = nextSearch;
@@ -119,6 +134,7 @@ export default function Projects() {
     controls,
     activeFilter,
     facetFilters,
+    currentPage,
     searchParams,
     setSearchParams,
   ]);
@@ -194,6 +210,10 @@ export default function Projects() {
         currentPageSafe * PAGE_SIZE,
       )
     : filteredAndSortedProjects;
+  const detailSearch = paramsToString(
+    buildProjectsSearchParams(controls, facetFilters, currentPageSafe),
+  );
+  const detailSearchSuffix = detailSearch ? `?${detailSearch}` : "";
 
   useEffect(() => {
     if (currentPage !== currentPageSafe) setCurrentPage(currentPageSafe);
@@ -549,10 +569,12 @@ export default function Projects() {
                     key={project.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() =>
+                      navigate(`/projects/${project.id}${detailSearchSuffix}`)
+                    }
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
-                        navigate(`/projects/${project.id}`);
+                        navigate(`/projects/${project.id}${detailSearchSuffix}`);
                       }
                     }}
                     className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink rounded-2xl"

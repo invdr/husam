@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import Lightbox from "yet-another-react-lightbox";
 import { Thumbnails, Zoom } from "yet-another-react-lightbox/plugins";
 import "yet-another-react-lightbox/styles.css";
@@ -25,9 +25,16 @@ function toAbsoluteImageUrl(url) {
 
 export default function ProjectDetail() {
   const { projectId } = useParams();
+  const location = useLocation();
   const { projects, loading } = useProjects();
   const project = projects.find((p) => p.id === projectId);
   const images = project?.images?.length ? project.images : [];
+  const catalogBackParams = new URLSearchParams(location.search);
+  catalogBackParams.delete("project");
+  const catalogBackSearch = catalogBackParams.toString();
+  const catalogBackPath = catalogBackSearch
+    ? `/catalog?${catalogBackSearch}`
+    : "/catalog";
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -80,7 +87,7 @@ export default function ProjectDetail() {
             Возможно, страница удалена или ссылка устарела.
           </p>
           <Link
-            to="/catalog"
+            to={catalogBackPath}
             className="mt-8 inline-flex items-center gap-2 rounded-xl border border-brand bg-transparent px-6 py-3 text-brand transition-colors hover:bg-brand hover:text-ink"
           >
             <Icon name="arrow-left" className="h-4 w-4" />
@@ -154,7 +161,7 @@ export default function ProjectDetail() {
               </li>
               <li className="shrink-0">
                 <Link
-                  to="/catalog"
+                  to={catalogBackPath}
                   className="transition-colors hover:text-brand"
                 >
                   Каталог
@@ -485,7 +492,7 @@ export default function ProjectDetail() {
             {/* Назад в каталог — в гриде, на lg только левая колонка */}
             <div className="order-6 mt-4 pt-4 border-t border-brand/20 lg:col-span-1 lg:col-start-1">
               <Link
-                to="/catalog"
+                to={catalogBackPath}
                 className="inline-flex items-center gap-2 text-gray-400 transition-colors hover:text-brand"
               >
                 <Icon name="arrow-left" className="h-4 w-4" />
