@@ -148,6 +148,23 @@ describe("saleProjectsCsvImport", () => {
     ]);
   });
 
+  it("allows wall material values up to 50 characters", () => {
+    const validWalls = "А".repeat(50);
+    const tooLongWalls = "А".repeat(51);
+    const baseRow = {
+      Артикул: "SP-LIMIT",
+      Название: "Дом с материалом",
+      Категория: "Дома",
+    };
+
+    expect(
+      validateRow(mapRowKeys({ ...baseRow, Стены: validWalls }), 2, new Set()).errors,
+    ).not.toContain("Стены не длиннее 50");
+    expect(
+      validateRow(mapRowKeys({ ...baseRow, Стены: tooLongWalls }), 2, new Set()).errors,
+    ).toContain("Стены не длиннее 50");
+  });
+
   it("импорт-пейлоад пишет реестровые поля top-level, а не дублирует их в attributes", () => {
     const raw = Object.fromEntries(
       CSV_RU_HEADERS.map((header, index) => [header, CSV_EXAMPLE_ROW[index] ?? ""]),

@@ -62,7 +62,7 @@ const LIMITS = {
   area: 20,
   rooms: 15,
   floors: 15,
-  material: 30,
+  material: 50,
   description: 2000,
   room_explanation: 3000,
 };
