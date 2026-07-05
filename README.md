@@ -133,12 +133,14 @@ npm run test:e2e     # Playwright smoke-тесты основных пользо
 
 Production-сайт раздаётся как статический frontend из `/var/www/husam-stroy` на сервере `77.222.63.88`. Backend PocketBase живёт отдельно на `https://api.husam.ru`.
 
+Важно: production HTTPS должен оставаться TLS 1.2-only (`ssl_protocols TLSv1.2;`). Не включайте TLS 1.3 без отдельной проверки с телефона.
+
 Обычный порядок деплоя:
 
 1. Выполните сборку проекта:
 
    ```powershell
-   npm run build
+   POCKETBASE_URL=https://api.husam.ru npm run build
    ```
 
 2. Синхронизируйте `dist/` на сервер:
@@ -150,8 +152,8 @@ Production-сайт раздаётся как статический frontend и
 3. Проверьте, что `https://husam.ru/` отдаёт свежий `index.html` и новые hashed assets:
 
    ```bash
-   curl -I https://husam.ru/
-   curl -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
+   curl --tlsv1.2 --tls-max 1.2 -I https://husam.ru/
+   curl --tlsv1.2 --tls-max 1.2 -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
    ```
 
 Перед деплоем обычно прогоняются:

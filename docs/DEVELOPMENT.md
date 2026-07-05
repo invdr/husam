@@ -117,16 +117,17 @@ npm run test:e2e
 - сервер: `77.222.63.88`
 - папка раздачи: `/var/www/husam-stroy`
 - backend: `https://api.husam.ru`
+- HTTPS на production должен оставаться TLS 1.2-only (`ssl_protocols TLSv1.2;`). Не включать TLS 1.3 без отдельной проверки с телефона.
 
 Порядок:
 
 ```bash
 npm test
 npm run lint
-npm run build
+POCKETBASE_URL=https://api.husam.ru npm run build
 rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/
-curl -I https://husam.ru/
-curl -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
+curl --tlsv1.2 --tls-max 1.2 -I https://husam.ru/
+curl --tlsv1.2 --tls-max 1.2 -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
 ```
 
 Не хранить SSH-пароли, токены и приватные ключи в документах или коде.

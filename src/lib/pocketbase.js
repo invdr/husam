@@ -1,19 +1,32 @@
 import PocketBase from "pocketbase";
 
 const DEFAULT_POCKETBASE_URL = "https://api.husam.ru";
+const SAME_ORIGIN_POCKETBASE_URL = "/";
+const SAME_ORIGIN_HOSTS = new Set(["husam.ru", "www.husam.ru", "77.222.63.88"]);
 
 function trimTrailingSlash(value) {
   return value.replace(/\/+$/, "");
 }
 
+function getBrowserLocation() {
+  return typeof window === "undefined" ? null : window.location;
+}
+
 export function resolvePocketbaseUrl(
-  configuredUrl = import.meta.env.VITE_POCKETBASE_URL
+  configuredUrl = import.meta.env.VITE_POCKETBASE_URL,
+  location = getBrowserLocation()
 ) {
   const configured = typeof configuredUrl === "string"
     ? trimTrailingSlash(configuredUrl.trim())
     : "";
 
-  return configured || DEFAULT_POCKETBASE_URL;
+  if (configured) return configured;
+
+  if (location && SAME_ORIGIN_HOSTS.has(location.hostname)) {
+    return SAME_ORIGIN_POCKETBASE_URL;
+  }
+
+  return DEFAULT_POCKETBASE_URL;
 }
 
 const pocketbaseUrl = resolvePocketbaseUrl();

@@ -47,3 +47,4 @@
 - Сервер frontend: `77.222.63.88`
 - Папка раздачи: `/var/www/husam-stroy`
 - Деплой frontend: `npm run build`, затем `rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/`
+- HTTPS на production оставлять TLS 1.2-only; TLS 1.3 не включать без мобильной проверки.

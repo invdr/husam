@@ -74,7 +74,8 @@
 - После `npm run build` запускается `scripts/generate-sitemap.mjs`, который пишет `dist/sitemap.xml` и добавляет детальные страницы из PocketBase при доступном API.
 - Текущий production frontend раздаётся из `/var/www/husam-stroy` на сервере `77.222.63.88`.
 - Текущий деплой frontend: `npm run build`, затем `rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/`.
-- Проверка после деплоя: `curl -I https://husam.ru/` и проверка, что `index.html` ссылается на свежие hashed assets.
+- Production HTTPS работает в режиме TLS 1.2-only (`ssl_protocols TLSv1.2;`). Не включать TLS 1.3 без отдельной мобильной проверки.
+- Проверка после деплоя: `curl --tlsv1.2 --tls-max 1.2 -I https://husam.ru/` и проверка, что `index.html` ссылается на свежие hashed assets.
 
 ## Источники истины
 

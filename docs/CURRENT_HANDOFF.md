@@ -15,36 +15,27 @@ There is currently no `AGENTS.md` in this repository.
 ## Current State
 
 - Branch: `main`
-- Latest deployed commit: `cef39d5 Preserve catalog pagination on detail return`
-- Production site: `https://husam.ru`
+- Latest deployed base commit: `cef39d5 Preserve catalog pagination on detail return`
+- Production also has the 2026-07-05 same-origin PocketBase hotfix from this worktree deployed; commit still pending.
+- Production site: `https://husam.ru` and `http://husam.ru`
 - Production frontend server: `77.222.63.88`
 - Production frontend directory: `/var/www/husam-stroy`
-- Backend/API/files: PocketBase at `https://api.husam.ru`
+- Backend/API/files: PocketBase via nginx at `https://husam.ru/api/` and `https://api.husam.ru/`; HTTP equivalents remain available.
+- Current production frontend bundle: `assets/index-BylOFq6A.js`
+- PocketBase client resolves to same-origin `/` on `husam.ru`, `www.husam.ru`, and `77.222.63.88`; PocketBase SDK appends `/api/...` itself. Other hosts fall back to `https://api.husam.ru` unless `VITE_POCKETBASE_URL` is set.
 
-The latest deployed code fixes catalog/list return behavior: `/catalog` and `/projects` keep pagination in `page`, pass query params into detail pages, and "Вернуться" links preserve list state.
+## Critical TLS Note
 
-## Read These First
+- Production HTTPS must stay **TLS 1.2-only**.
+- Do not switch `/etc/letsencrypt/options-ssl-nginx.conf` back to `ssl_protocols TLSv1.2 TLSv1.3;`.
+- The affected mobile route fails with TLS 1.3, including for a bare `OK` response. It works after forcing `ssl_protocols TLSv1.2;`.
+- HTTP is intentionally still available. Do not enable HTTP-to-HTTPS redirect without a fresh mobile check.
 
-Use the smallest useful context:
+Current required server state:
 
-- `docs/CURRENT_HANDOFF.md` - this file.
-- `docs/ARCHITECTURE.md` - runtime architecture, routes, data contracts, deploy.
-- `docs/DEVELOPMENT.md` - current work rules, checks, deploy procedure.
-- `package.json` - commands and dependencies.
-
-For task-specific context:
-
-- Routes: `src/App.jsx`
-- PocketBase client: `src/lib/pocketbase.js`
-- Public data hooks: `src/hooks/useProjects.js`, `src/hooks/useSaleProjects.js`
-- Catalog pages: `src/pages/Catalog.jsx`, `src/pages/Projects.jsx`
-- Detail pages: `src/pages/ProjectDetail.jsx`, `src/pages/ProjectSaleDetail.jsx`
-- Admin editors/forms: `src/pages/Admin/`, `src/components/admin/`
-- Legal pages content: `src/data/legalDocuments.js`
-- Sitemap generation: `scripts/generate-sitemap.mjs`
-- PocketBase schema import: `docs/pocketbase-collections.import.v2.json`
-
-Avoid reading all `docs/*.md` up front. Several are archive/history docs.
+```nginx
+ssl_protocols TLSv1.2;
+```
 
 ## Current Architecture Notes
 
@@ -56,6 +47,20 @@ Avoid reading all `docs/*.md` up front. Several are archive/history docs.
 - Legal documents are code-backed routes `/privacy` and `/consent`.
 - `npm run build` also runs sitemap generation.
 
+## Key Files
+
+- Runtime routes: `src/App.jsx`
+- PocketBase client: `src/lib/pocketbase.js`
+- Public data hooks: `src/hooks/useProjects.js`, `src/hooks/useSaleProjects.js`
+- Catalog pages: `src/pages/Catalog.jsx`, `src/pages/Projects.jsx`
+- Detail pages: `src/pages/ProjectDetail.jsx`, `src/pages/ProjectSaleDetail.jsx`
+- Admin editors/forms: `src/pages/Admin/`, `src/components/admin/`
+- Legal pages content: `src/data/legalDocuments.js`
+- Sitemap generation: `scripts/generate-sitemap.mjs`
+- PocketBase schema import: `docs/pocketbase-collections.import.v2.json`
+
+Avoid reading all `docs/*.md` up front. Several are archive/history docs.
+
 ## Commands
 
 Local:
@@ -65,7 +70,7 @@ npm install
 npm run dev
 npm test
 npm run lint
-npm run build
+POCKETBASE_URL=https://api.husam.ru npm run build
 ```
 
 Deploy frontend:
@@ -73,28 +78,41 @@ Deploy frontend:
 ```bash
 npm test
 npm run lint
-npm run build
+POCKETBASE_URL=https://api.husam.ru npm run build
 rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/
-curl -I https://husam.ru/
-curl -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
+curl --tlsv1.2 --tls-max 1.2 -I https://husam.ru/
+curl --tlsv1.2 --tls-max 1.2 -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
 ```
 
-Do not store server passwords or tokens in this file.
+Production smoke tests:
+
+```bash
+curl -I http://husam.ru/
+curl --tlsv1.2 --tls-max 1.2 -I https://husam.ru/
+curl -fsSL http://husam.ru/api/health
+curl --tlsv1.2 --tls-max 1.2 -fsSL https://husam.ru/api/health
+curl --tlsv1.2 --tls-max 1.2 -fsSL https://api.husam.ru/api/health
+```
+
+Do not store SSH passwords, tokens, or private keys in docs or code.
 
 ## Last Known Checks
 
-Before deploying `cef39d5` on 2026-07-05:
+After the same-origin PocketBase hotfix on 2026-07-05:
 
-- `npm test` passed: 151 tests.
+- `npm test` passed: 154 tests.
 - `npm run lint` passed.
-- `npm run build` passed.
-- Public `https://husam.ru/` returned `200 OK` and served the new hashed bundle.
+- `POCKETBASE_URL=https://api.husam.ru npm run build` passed after rerunning sitemap generation; final `dist/sitemap.xml` has 187 URLs.
+- Deployed with `rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/`.
 
-After the documentation refresh on 2026-07-05:
+After the TLS fix on 2026-07-05:
 
-- `git diff --check` passed.
-- `npm test` passed: 151 tests.
-- `npm run lint` passed.
+- Fresh Let's Encrypt certificate `husam.ru` covers `husam.ru`, `www.husam.ru`, and `api.husam.ru`; expires `2026-10-03 14:52:02 UTC`.
+- nginx listens on 80/443; UFW allows only 22/80/443.
+- PocketBase is active on `127.0.0.1:8090`.
+- `certbot renew --dry-run --cert-name husam.ru` passed.
+- `https://husam.ru/` works on the affected phone after forcing TLS 1.2-only.
+- Server cleanup removed temporary TLS test files, disabled includes, and custom TLS logs.
 
 ## Next Useful Smoke Tests
 
@@ -114,6 +132,7 @@ After admin/data changes:
 
 ## Open Risks / Watch Items
 
+- Do not re-enable TLS 1.3 on production HTTPS.
 - `docs/GOOGLE_SETUP.md`, `docs/QUICK_START.md`, `docs/TEST_DATA.md`, and `docs/MIGRATION_CHECKLIST.md` are archive documents, not current workflow.
 - Local `npm run build` writes a static-only sitemap unless `POCKETBASE_URL` or `VITE_POCKETBASE_URL` is available.
 - Production deploy is manual `rsync` to VPS, not Vercel/Netlify automation.

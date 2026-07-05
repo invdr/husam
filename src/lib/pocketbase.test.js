@@ -3,7 +3,18 @@ import { resolvePocketbaseUrl } from "./pocketbase";
 
 describe("resolvePocketbaseUrl", () => {
   it("uses the remote API when no env URL is set", () => {
-    expect(resolvePocketbaseUrl("")).toBe("https://api.husam.ru");
+    expect(resolvePocketbaseUrl("", { hostname: "localhost" })).toBe(
+      "https://api.husam.ru"
+    );
+  });
+
+  it("uses the same-origin API on production hostnames", () => {
+    expect(resolvePocketbaseUrl("", { hostname: "husam.ru" })).toBe("/");
+    expect(resolvePocketbaseUrl("", { hostname: "www.husam.ru" })).toBe("/");
+  });
+
+  it("uses the same-origin API when the site is opened by IP", () => {
+    expect(resolvePocketbaseUrl("", { hostname: "77.222.63.88" })).toBe("/");
   });
 
   it("trims the default remote API URL", () => {
