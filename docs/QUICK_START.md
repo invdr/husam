@@ -1,5 +1,7 @@
 # Быстрый старт: Настройка каталога с Google Forms
 
+> Архив: текущий каталог работает через PocketBase и `/admin`, а не через Google Forms/Sheets. Для актуального входа см. `CURRENT_HANDOFF.md`, `ARCHITECTURE.md` и `DEVELOPMENT.md`.
+
 ## 🚀 Краткая инструкция
 
 ### 1. Настрой Google сервисы

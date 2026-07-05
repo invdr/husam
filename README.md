@@ -1,6 +1,12 @@
 # HUSAM STROY INVEST
 
-Одностраничный промо‑сайт строительной компании **HUSAM STROY INVEST**, построенный на React, Vite и Tailwind CSS.
+Клиентский сайт и админка строительной компании **HUSAM STROY INVEST**, построенные на React, Vite, Tailwind CSS и PocketBase.
+
+Production:
+
+- сайт: `https://husam.ru`
+- API/файлы/админ-данные: `https://api.husam.ru`
+- frontend на сервере: `/var/www/husam-stroy`
 
 ## 🚀 Быстрый старт
 
@@ -27,10 +33,12 @@ npm run dev
 
 ### Переменные окружения (PocketBase)
 
-Для работы каталога проектов и админки нужен бэкенд PocketBase. Скопируйте `.env.example` в `.env` и укажите:
+Для работы каталога проектов и админки нужен backend PocketBase. Локально можно создать `.env` и указать:
 
 - `VITE_POCKETBASE_URL` — URL API PocketBase (например, `https://api.husam.ru`)
 - `VITE_YANDEX_METRIKA_ID` — номер счетчика Яндекс.Метрики; если не задан, аналитика не инициализируется
+
+Если `VITE_POCKETBASE_URL` не задан, frontend использует fallback `https://api.husam.ru` из `src/lib/pocketbase.js`.
 
 ### Production-сборка
 
@@ -50,17 +58,24 @@ npm run preview
 husam/
 ├── src/
 │   ├── components/          # React-компоненты
-│   │   ├── common/          # Общие компоненты (Header, Footer, Icon, etc.)
-│   │   ├── sections/        # Секции страницы (Hero, Services, FAQ, etc.)
-│   │   └── forms/           # Формы (ContactForm, Calculator)
-│   ├── hooks/               # Кастомные хуки (useReveal, useCountUp)
-│   ├── utils/               # Утилиты (validation, messenger, constants)
+│   │   ├── admin/           # Редакторы админки
+│   │   ├── catalog/         # Карточки каталога работ
+│   │   ├── sale/            # Карточки готовых проектов
+│   │   ├── common/          # Header, Footer, Card, Icon, Pagination
+│   │   ├── sections/        # Секции главной страницы
+│   │   └── forms/           # ContactForm, Calculator
+│   ├── pages/               # Роуты: catalog, projects, admin, legal
+│   ├── hooks/               # Хуки данных и UI
+│   ├── lib/                 # PocketBase client, analytics
+│   ├── utils/               # Утилиты нормализации, CSV, validation
+│   ├── data/                # Дефолтный контент и юридические документы
 │   ├── styles/              # Глобальные стили (index.css)
-│   ├── assets/              # Статические ресурсы (изображения)
+│   ├── assets/              # Локальные шрифты и bundled assets
 │   ├── App.jsx              # Главный компонент приложения
 │   └── main.jsx             # Точка входа
 ├── docs/                    # Документация проекта
-├── ex/                      # Демо-версия с расширенными функциями
+├── public/                  # Статические файлы, .htaccess, favicon, robots
+├── scripts/                 # Миграции и генерация sitemap
 ├── index.html               # HTML-шаблон
 ├── vite.config.js           # Конфигурация Vite
 ├── tailwind.config.js       # Конфигурация Tailwind CSS
@@ -91,6 +106,7 @@ npm run dev          # Запуск dev-сервера на http://localhost:517
 
 # Сборка
 npm run build        # Создание production-сборки в папке dist/
+npm test             # Unit/component tests через Vitest
 
 # Тестирование сборки
 npm run preview      # Предварительный просмотр production-сборки
@@ -113,9 +129,11 @@ npm run test:e2e     # Playwright smoke-тесты основных пользо
 
 ## 🚢 Деплой
 
-### Статический хостинг
+### Текущий production на VPS
 
-Для деплоя на статический хостинг (Vercel, Netlify, GitHub Pages):
+Production-сайт раздаётся как статический frontend из `/var/www/husam-stroy` на сервере `77.222.63.88`. Backend PocketBase живёт отдельно на `https://api.husam.ru`.
+
+Обычный порядок деплоя:
 
 1. Выполните сборку проекта:
 
@@ -123,47 +141,41 @@ npm run test:e2e     # Playwright smoke-тесты основных пользо
    npm run build
    ```
 
-2. Загрузите содержимое папки `dist/` на хостинг
+2. Синхронизируйте `dist/` на сервер:
 
-### Vercel
+   ```bash
+   rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/
+   ```
 
-В настройках проекта добавьте переменную окружения `VITE_POCKETBASE_URL`.
-Для аналитики добавьте `VITE_YANDEX_METRIKA_ID`.
+3. Проверьте, что `https://husam.ru/` отдаёт свежий `index.html` и новые hashed assets:
 
-```powershell
-# Установка Vercel CLI (опционально)
-npm i -g vercel
+   ```bash
+   curl -I https://husam.ru/
+   curl -fsSL https://husam.ru/ | rg 'assets/index-|assets/vendor-'
+   ```
 
-# Деплой
-vercel
+Перед деплоем обычно прогоняются:
+
+```bash
+npm test
+npm run lint
+npm run build
 ```
 
-Или подключите репозиторий в панели Vercel — автоматический деплой настроится сам.
-
-### Netlify
-
-```powershell
-# Установка Netlify CLI (опционально)
-npm i -g netlify-cli
-
-# Деплой
-netlify deploy --prod --dir=dist
-```
-
-Или используйте drag-and-drop интерфейс на сайте Netlify.
+Vercel/Netlify остаются возможными как альтернативный статический хостинг, но текущий рабочий production обновляется прямой загрузкой `dist/` на VPS.
 
 ## 📚 Документация
 
 Подробная документация в папке `docs/`:
 
-- **[README.md](./docs/README.md)** — общая информация о проекте
+- **[CURRENT_HANDOFF.md](./docs/CURRENT_HANDOFF.md)** — короткий вход в контекст для новой сессии
+- **[README.md](./docs/README.md)** — карта документации
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — архитектура и технический стек
-- **[POCKETBASE_MIGRATION_PLAN.md](./docs/POCKETBASE_MIGRATION_PLAN.md)** — пошаговый план миграции и эксплуатации PocketBase
+- **[POCKETBASE_MIGRATION_PLAN.md](./docs/POCKETBASE_MIGRATION_PLAN.md)** — исторический план миграции и регламент PocketBase
 - **[IMPROVEMENTS_PLAN.md](./docs/IMPROVEMENTS_PLAN.md)** — план улучшений и статус задач
 - **[FEATURES.md](./docs/FEATURES.md)** — описание секций и функций
-- **[PORTFOLIO.md](./docs/PORTFOLIO.md)** — описание блока портфолио (ex/index.html)
-- **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — рекомендации по развитию
-- **[MIGRATION_CHECKLIST.md](./docs/MIGRATION_CHECKLIST.md)** — чеклист миграции на Vite
+- **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — текущий регламент разработки, проверки и деплоя
+- **[MIGRATION_CHECKLIST.md](./docs/MIGRATION_CHECKLIST.md)** — архивный чеклист миграции на Vite
 
 ## 🔧 Конфигурация
 
@@ -231,4 +243,4 @@ import image from "@/assets/image.jpg";
 
 ---
 
-**Последнее обновление:** Декабрь 2024
+**Последнее обновление:** Июль 2026

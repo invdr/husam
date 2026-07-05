@@ -1,5 +1,7 @@
 # Тестовые данные для Google Sheets
 
+> Архив: текущая версия проекта не использует Google Sheets как источник каталога. Данные живут в PocketBase.
+
 ## Структура таблицы
 
 | id  | title | type | area | duration | budget | location | scope | images |

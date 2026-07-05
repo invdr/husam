@@ -1,5 +1,7 @@
 # Пошаговая настройка Google Forms + Google Sheets + Google Drive + Apps Script
 
+> Архив: текущая версия проекта использует PocketBase (`https://api.husam.ru`) и клиентскую админку `/admin`. Этот документ оставлен как исторический контекст старой Google Forms/Sheets-схемы.
+
 ## 📋 Общая схема работы
 
 1. **Google Forms** — форма для заказчика (добавление карточек)

@@ -14,6 +14,7 @@
 ## Данные и API
 
 - Клиент PocketBase находится в `src/lib/pocketbase.js`.
+- Если `VITE_POCKETBASE_URL` не задан, клиент использует fallback `https://api.husam.ru`.
 - Публичные хуки читают данные напрямую из PocketBase:
   - `useProjects`, `useSaleProjects`;
   - `useProjectTypes`, `useSaleProjectTypes`;
@@ -21,6 +22,14 @@
 - Для файлов используется `pb.files.getURL(record, filename)`.
 - Списки проектов подписываются на realtime-события PocketBase через общий helper `subscribeToPocketbaseCollections`; ошибки autocancel/abort фильтруются через `isPocketbaseAbortError`.
 - Готовые проекты нормализуются в `useSaleProjects`: top-level поля PocketBase являются основным контрактом, включая расширенные данные реестра (`explication_*`, `material_*`, `style`, `bedrooms`, `total_built_area` и т.д.). Legacy-дубли готовых проектов (`area`, `rooms`, `material`, `room_explanation`, `has_*`, ручной `discount`, `discounted_price`, `print_price`, `site_status`) не входят в актуальную схему; старые ответы читаются только как fallback.
+
+## Роуты
+
+- `/` — главная страница с секциями Hero, Services, Results, Calculator, Portfolio, Process, FAQ, Contacts.
+- `/catalog` и `/catalog/:projectId` — каталог выполненных работ.
+- `/projects` и `/projects/:projectId` — готовые проекты на продажу.
+- `/admin` и `/admin/login` — клиентская админка поверх PocketBase.
+- `/privacy` и `/consent` — юридические страницы из `src/data/legalDocuments.js`.
 
 ## Админка `/admin`
 
@@ -47,6 +56,7 @@
 - Интеграция форм с мессенджером сохранена.
 - Перед открытием заявки текст дополняется контекстом источника: URL страницы, форма/проект и UTM-метки.
 - Юридические страницы `/privacy` и `/consent` подключены как обычные React Router routes.
+- Пагинация `/catalog` и `/projects` хранит страницу в query-параметре `page`, а переход в детальную карточку сохраняет query-строку. Это нужно, чтобы браузерная кнопка назад и ссылки "Вернуться" возвращали пользователя на ту же страницу списка.
 - `AnalyticsBridge` и `src/lib/analytics.js` отвечают за инициализацию Метрики, SPA-хиты и цели.
 - Анимации и визуальные хуки (`useReveal`, `useCountUp`) не зависят от backend.
 - В админке работают:
@@ -56,13 +66,18 @@
 
 ## Окружение и деплой
 
-- Для frontend нужен только:
+- Для frontend достаточно:
   - `VITE_POCKETBASE_URL=https://api.husam.ru`
 - Для аналитики:
   - `VITE_YANDEX_METRIKA_ID=<номер счетчика>`
 - Frontend остается статическим (`dist/`), backend живет отдельно на VPS (`api.husam.ru`).
 - После `npm run build` запускается `scripts/generate-sitemap.mjs`, который пишет `dist/sitemap.xml` и добавляет детальные страницы из PocketBase при доступном API.
+- Текущий production frontend раздаётся из `/var/www/husam-stroy` на сервере `77.222.63.88`.
+- Текущий деплой frontend: `npm run build`, затем `rsync -av --delete dist/ root@77.222.63.88:/var/www/husam-stroy/`.
+- Проверка после деплоя: `curl -I https://husam.ru/` и проверка, что `index.html` ссылается на свежие hashed assets.
 
-## Источник истины по миграции
+## Источники истины
 
-- Операционный план, этапы и rollback описаны в `docs/POCKETBASE_MIGRATION_PLAN.md`.
+- Быстрый вход в новую сессию: `docs/CURRENT_HANDOFF.md`.
+- Актуальная схема и runtime-контракты: этот файл и `docs/DEVELOPMENT.md`.
+- Исторический план миграции и rollback по PocketBase: `docs/POCKETBASE_MIGRATION_PLAN.md`.
