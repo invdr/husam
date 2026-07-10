@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly backup_root="${BACKUP_ROOT:-/var/backups/husam/pocketbase}"
+readonly retention_days="${BACKUP_RETENTION_DAYS:-14}"
+readonly timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+readonly destination="${backup_root}/${timestamp}"
+
+umask 077
+install -d -m 700 "${backup_root}"
+exec 9>"/run/lock/husam-pocketbase-backup.lock"
+flock -n 9 || exit 0
+
+install -d -m 700 "${destination}"
+
+# sqlite3 is not installed on the VPS. The Python sqlite backup API is an
+# online, transactionally-consistent backup and does not require stopping
+# PocketBase.
+python3 - "${destination}" <<'PY'
+import sqlite3
+import sys
+from pathlib import Path
+
+destination = Path(sys.argv[1])
+for filename in ("data.db", "auxiliary.db"):
+    source = sqlite3.connect(
+        f"file:/opt/pocketbase/pb_data/{filename}?mode=ro", uri=True
+    )
+    target = sqlite3.connect(destination / filename)
+    try:
+        source.backup(target)
+    finally:
+        target.close()
+        source.close()
+PY
+
+sha256sum "${destination}/data.db" "${destination}/auxiliary.db" > "${destination}/SHA256SUMS"
+find "${backup_root}" -mindepth 1 -maxdepth 1 -type d -mtime "+${retention_days}" -exec rm -rf {} +

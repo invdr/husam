@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import Icon from "@/components/common/Icon";
+import { isSafeExternalUrl } from "@/utils/externalUrl";
 
 const LABELS = {
   address: "Адрес",
@@ -10,6 +11,12 @@ const LABELS = {
   vk_url: "ВКонтакте (URL)",
   telegram_url: "Telegram (URL)",
 };
+
+const SOCIAL_URL_KEYS = new Set(["instagram_url", "vk_url", "telegram_url"]);
+
+function isBlank(value) {
+  return String(value ?? "").trim() === "";
+}
 
 export default function SettingsEditor({
   settings,
@@ -28,6 +35,19 @@ export default function SettingsEditor({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const invalidKey = defaultKeys.find(
+      (key) =>
+        SOCIAL_URL_KEYS.has(key) &&
+        !isBlank(form[key]) &&
+        !isSafeExternalUrl(form[key])
+    );
+
+    if (invalidKey) {
+      toast.error(`${LABELS[invalidKey]}: укажите полный URL, начинающийся с http:// или https://`);
+      return;
+    }
+
     setSaving(true);
     try {
       for (const key of defaultKeys) {
@@ -75,9 +95,10 @@ export default function SettingsEditor({
             </label>
             <input
               id={`setting-${key}`}
-              type="text"
+              type={SOCIAL_URL_KEYS.has(key) ? "url" : "text"}
               value={form[key] ?? ""}
               onChange={(e) => handleChange(key, e.target.value)}
+              inputMode={SOCIAL_URL_KEYS.has(key) ? "url" : undefined}
               className="w-full rounded-xl border border-brand/20 bg-ink px-4 py-2 text-white outline-none focus:border-brand"
               placeholder={LABELS[key]}
             />

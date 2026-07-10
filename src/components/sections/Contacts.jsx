@@ -1,6 +1,7 @@
 import { Badge, Card, CardContent, Icon } from "@/components/common";
 import ContactForm from "@/components/forms/ContactForm";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { safeExternalUrl } from "@/utils/externalUrl";
 
 const FALLBACK = {
   address: "г. Грозный, пр-т Кадырова, 274",
@@ -25,7 +26,9 @@ export default function Contacts() {
     { name: "Instagram", url: s.instagram_url || "", icon: "instagram" },
     { name: "ВКонтакте", url: s.vk_url || "", icon: "share-2" },
     { name: "Telegram", url: s.telegram_url || "", icon: "send" },
-  ].filter((x) => x.url);
+  ]
+    .map((social) => ({ ...social, url: safeExternalUrl(social.url) }))
+    .filter((social) => social.url);
 
   return (
     <section

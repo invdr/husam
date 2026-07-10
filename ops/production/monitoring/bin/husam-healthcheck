@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+systemctl is-active --quiet nginx
+systemctl is-active --quiet pocketbase
+curl --fail --silent --show-error --connect-timeout 5 --max-time 10 \
+  http://127.0.0.1:8090/api/health >/dev/null

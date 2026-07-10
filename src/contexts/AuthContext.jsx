@@ -13,6 +13,11 @@ const AuthContext = createContext(null);
 
 const initialAuth = { session: null, user: null, loading: true };
 
+function getMfaId(error) {
+  const mfaId = error?.response?.mfaId;
+  return typeof mfaId === "string" && mfaId.trim() ? mfaId : null;
+}
+
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState(initialAuth);
   const { session, user, loading } = auth;
@@ -36,8 +41,34 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signIn = useCallback(async (email, password) => {
-    const data = await pb.collection("admins").authWithPassword(email, password);
-    return data;
+    const admins = pb.collection("admins");
+
+    try {
+      return await admins.authWithPassword(email, password);
+    } catch (error) {
+      const mfaId = getMfaId(error);
+      if (!mfaId) throw error;
+
+      const { otpId } = await admins.requestOTP(email);
+      if (typeof otpId !== "string" || !otpId) {
+        throw new Error("Не удалось запросить код подтверждения.");
+      }
+
+      // Keep the short-lived MFA challenge only in component state.
+      return { requiresMfa: true, mfaId, otpId };
+    }
+  }, []);
+
+  const completeMfaSignIn = useCallback(async (challenge, code) => {
+    const mfaId = challenge?.mfaId;
+    const otpId = challenge?.otpId;
+    const otp = String(code ?? "").trim();
+
+    if (!mfaId || !otpId || !otp) {
+      throw new Error("Код подтверждения недействителен. Войдите заново.");
+    }
+
+    return pb.collection("admins").authWithOTP(otpId, otp, { mfaId });
   }, []);
 
   const signOut = useCallback(async () => {
@@ -49,6 +80,7 @@ export function AuthProvider({ children }) {
     session,
     loading,
     signIn,
+    completeMfaSignIn,
     signOut,
     isAuthenticated: !!user,
   };

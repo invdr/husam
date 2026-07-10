@@ -1,0 +1,6 @@
+[Unit]
+Description=HUSAM production health check
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/husam-healthcheck

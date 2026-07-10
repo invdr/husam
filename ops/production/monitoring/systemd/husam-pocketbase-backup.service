@@ -1,0 +1,8 @@
+[Unit]
+Description=Transactional PocketBase SQLite backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/husam-pocketbase-backup
+Nice=10
+IOSchedulingClass=best-effort
