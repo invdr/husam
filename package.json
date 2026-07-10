@@ -30,7 +30,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5",
-    "react-router-dom": "^6.26.0",
+    "react-router-dom": "^7.18.1",
     "react-swipeable": "^7.0.2",
     "sonner": "^2.0.7",
     "yet-another-react-lightbox": "^3.27.0"
