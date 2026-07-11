@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { pb } from "@/lib/pocketbase";
 import Icon from "@/components/common/Icon";
+import { normalizeDictionaryName } from "@/utils/dictionaryName";
+import { canRenameWithBatch } from "@/utils/pocketbaseBatch";
 
 export default function SaleTypesEditor({ types, onClose, onUpdate }) {
   const items = types.map((name) => ({ name }));
@@ -27,10 +29,18 @@ export default function SaleTypesEditor({ types, onClose, onUpdate }) {
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
+    if (items.some(({ name: itemName }) => normalizeDictionaryName(itemName) === normalizeDictionaryName(name))) {
+      toast.error("Категория с таким названием уже существует");
+      return;
+    }
     try {
       await pb
         .collection("sale_project_types")
-        .create({ name, sort_order: items.length });
+        .create({
+          name,
+          name_key: normalizeDictionaryName(name),
+          sort_order: items.length,
+        });
       toast.success("Категория добавлена");
       setNewName("");
       onUpdate?.();
@@ -49,7 +59,7 @@ export default function SaleTypesEditor({ types, onClose, onUpdate }) {
     const isTaken = items.some(
       ({ name }) =>
         name !== oldName &&
-        name.trim().toLowerCase() === newValue.toLowerCase()
+        normalizeDictionaryName(name) === normalizeDictionaryName(newValue)
     );
     if (isTaken) {
       toast.error("Категория с таким названием уже существует");
@@ -66,22 +76,27 @@ export default function SaleTypesEditor({ types, onClose, onUpdate }) {
       const projects = await pb.collection("sale_projects").getFullList({
         filter: `type = "${escapedOld}"`,
       });
-      await Promise.all(
-        projects.map((project) =>
-          pb.collection("sale_projects").update(project.id, { type: newValue })
-        )
+      if (!canRenameWithBatch(projects.length)) {
+        toast.error("Слишком много проектов для одной транзакции переименования");
+        return;
+      }
+      const batch = pb.createBatch();
+      projects.forEach((project) =>
+        batch.collection("sale_projects").update(project.id, { type: newValue })
       );
-
       if (oldRow) {
-        await pb.collection("sale_project_types").update(oldRow.id, {
+        batch.collection("sale_project_types").update(oldRow.id, {
           name: newValue,
+          name_key: normalizeDictionaryName(newValue),
         });
       } else {
-        await pb.collection("sale_project_types").create({
+        batch.collection("sale_project_types").create({
           name: newValue,
+          name_key: normalizeDictionaryName(newValue),
           sort_order: 0,
         });
       }
+      await batch.send();
 
       toast.success("Категория переименована");
       setEditing(null);

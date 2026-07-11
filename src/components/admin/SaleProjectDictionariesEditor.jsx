@@ -3,17 +3,19 @@ import { toast } from "sonner";
 import { pb } from "@/lib/pocketbase";
 import Icon from "@/components/common/Icon";
 import { SALE_PROJECT_OPTION_DICTIONARIES } from "@/data/saleProjectOptionDictionaries";
+import { normalizeDictionaryName } from "@/utils/dictionaryName";
+import { canRenameWithBatch } from "@/utils/pocketbaseBatch";
 
 function escapeFilterValue(value) {
   return String(value).replace(/"/g, '\\"');
 }
 
 function isDuplicate(values, currentValue, nextValue) {
-  const normalized = nextValue.trim().toLowerCase();
+  const normalized = normalizeDictionaryName(nextValue);
   return values.some(
     (value) =>
       value !== currentValue &&
-      String(value).trim().toLowerCase() === normalized,
+      normalizeDictionaryName(value) === normalized,
   );
 }
 
@@ -68,7 +70,11 @@ export default function SaleProjectDictionariesEditor({
     try {
       await pb
         .collection(dict.collection)
-        .create({ name, sort_order: values.length });
+        .create({
+          name,
+          name_key: normalizeDictionaryName(name),
+          sort_order: values.length,
+        });
       toast.success("Значение добавлено");
       setNewNames((prev) => ({ ...prev, [dict.key]: "" }));
       onUpdate?.();
@@ -101,24 +107,29 @@ export default function SaleProjectDictionariesEditor({
         filter: `${dict.projectField} = "${escapedOld}"`,
         fields: "id",
       });
-      await Promise.all(
-        projects.map((project) =>
-          pb
-            .collection("sale_projects")
-            .update(project.id, { [dict.projectField]: newValue }),
-        ),
+      if (!canRenameWithBatch(projects.length)) {
+        toast.error("Слишком много проектов для одной транзакции переименования");
+        return;
+      }
+      const batch = pb.createBatch();
+      projects.forEach((project) =>
+        batch
+          .collection("sale_projects")
+          .update(project.id, { [dict.projectField]: newValue }),
       );
-
       if (oldRow) {
-        await pb.collection(dict.collection).update(oldRow.id, {
+        batch.collection(dict.collection).update(oldRow.id, {
           name: newValue,
+          name_key: normalizeDictionaryName(newValue),
         });
       } else {
-        await pb.collection(dict.collection).create({
+        batch.collection(dict.collection).create({
           name: newValue,
+          name_key: normalizeDictionaryName(newValue),
           sort_order: values.length,
         });
       }
+      await batch.send();
 
       toast.success("Значение переименовано");
       setEditing(null);

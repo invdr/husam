@@ -52,7 +52,6 @@ function getSearchSuffix(params) {
 function CatalogPaginatedList({
   filteredAndSortedProjects,
   pageSize,
-  navigate,
   page,
   onPageChange,
   onPageReport,
@@ -82,16 +81,12 @@ function CatalogPaginatedList({
         {paginatedProjects.map((project) => (
           <div
             key={project.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => navigate(`/catalog/${project.id}${detailSearch}`)}
-            onKeyDown={(e) =>
-              e.key === "Enter" &&
-              navigate(`/catalog/${project.id}${detailSearch}`)
-            }
-            className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink rounded-2xl"
+            className="rounded-2xl"
           >
-            <ProjectCard project={project} />
+            <ProjectCard
+              project={project}
+              titleHref={`/catalog/${project.id}${detailSearch}`}
+            />
           </div>
         ))}
       </div>
@@ -371,7 +366,6 @@ export default function Catalog() {
             <CatalogPaginatedList
               filteredAndSortedProjects={filteredAndSortedProjects}
               pageSize={PAGE_SIZE}
-              navigate={navigate}
               page={currentPage}
               onPageChange={setCurrentPage}
               onPageReport={setReportedPage}

@@ -6,6 +6,7 @@ import {
   CardDescription,
   Icon,
 } from "@/components/common";
+import { Link } from "react-router-dom";
 import ProjectImage from "@/components/catalog/ProjectImage";
 import {
   formatPrice,
@@ -22,6 +23,7 @@ export default function SaleProjectCard({
   adminFooter,
   imageOverlay,
   customFieldDefs = EMPTY_CUSTOM_FIELD_DEFS,
+  titleHref,
 }) {
   const canRequest = typeof onRequestClick === "function";
   const discount = formatSaleProjectDiscount(project.oldPrice, project.price);
@@ -42,7 +44,16 @@ export default function SaleProjectCard({
 
       <CardHeader variant="listing">
         <CardTitle variant="listing" title={project.title}>
-          {project.title}
+          {titleHref ? (
+            <Link
+              to={titleHref}
+              className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            >
+              {project.title}
+            </Link>
+          ) : (
+            project.title
+          )}
         </CardTitle>
         <CardDescription variant="listing">
           {project.type || "Готовый проект"}

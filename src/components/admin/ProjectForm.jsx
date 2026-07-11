@@ -4,6 +4,7 @@ import {
   useUnsavedChangesWarning,
   confirmDiscard,
 } from "@/hooks/useUnsavedChangesWarning";
+import UnsavedChangesNavigationWarning from "@/hooks/UnsavedChangesNavigationWarning";
 import {
   DndContext,
   closestCenter,
@@ -40,6 +41,7 @@ import {
   REPAIR_ROOMS,
 } from "@/utils/catalogAttributes";
 import { resizeImage } from "@/utils/imageResize";
+import { buildDictionaryCreatePayload } from "@/utils/dictionaryName";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -383,10 +385,9 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
         .getFirstListItem(`name = "${name.replace(/"/g, '\\"')}"`)
         .catch(() => null);
       if (!existing) {
-        await pb.collection("project_types").create({
-          name,
-          sort_order: types.length,
-        });
+        await pb
+          .collection("project_types")
+          .create(buildDictionaryCreatePayload(name, types.length));
       }
       await refetch();
       setForm((f) => ({ ...f, type: name }));
@@ -626,6 +627,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
       onChange={() => setDirty(true)}
       className="space-y-6"
     >
+      <UnsavedChangesNavigationWarning dirty={dirty} />
       <div className="flex items-center justify-between">
         <h2 className="font-play text-xl font-bold text-white">
           {isEdit ? "Редактировать проект" : "Новый проект"}
@@ -734,6 +736,7 @@ export default function ProjectForm({ project, onSave, onCancel, existingProject
               <button
                 type="button"
                 onClick={addNewType}
+                aria-label="Добавить категорию"
                 className="shrink-0 rounded-xl border border-brand/30 px-4 py-2.5 text-brand hover:bg-brand/10"
               >
                 <Icon name="plus" className="h-4 w-4" />

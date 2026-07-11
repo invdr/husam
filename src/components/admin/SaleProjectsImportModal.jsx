@@ -11,6 +11,10 @@ import {
   mapRowKeys,
   validateRow,
 } from "@/utils/saleProjectsCsvImport";
+import {
+  buildDictionaryCreatePayload,
+  normalizeDictionaryName,
+} from "@/utils/dictionaryName";
 
 const CHUNK_SIZE = 100;
 
@@ -71,24 +75,32 @@ async function parseInputFile(file) {
 }
 
 async function ensureSaleTypesExist(typeNames) {
-  const unique = Array.from(new Set((typeNames || []).map((t) => asTrimmedString(t)).filter(Boolean)));
-  if (unique.length === 0) return;
+  const namesByKey = new Map();
+  for (const rawName of typeNames || []) {
+    const name = asTrimmedString(rawName);
+    if (!name) continue;
+    const nameKey = normalizeDictionaryName(name);
+    if (!namesByKey.has(nameKey)) namesByKey.set(nameKey, name);
+  }
+  if (namesByKey.size === 0) return;
 
   const existing = await pb.collection("sale_project_types").getFullList({
     sort: "sort_order",
-    fields: "name,sort_order",
+    fields: "name,name_key,sort_order",
   });
 
-  const existingSet = new Set((existing || []).map((r) => r.name));
+  const existingSet = new Set(
+    (existing || []).map((r) => normalizeDictionaryName(r.name_key ?? r.name))
+  );
   const maxSort =
     (existing || []).reduce((m, r) => Math.max(m, r.sort_order ?? 0), -1) ?? -1;
 
-  const missing = unique.filter((name) => !existingSet.has(name));
+  const missing = Array.from(namesByKey).filter(([nameKey]) => !existingSet.has(nameKey));
   if (missing.length === 0) return;
 
-  const rows = missing.map((name, idx) => ({
-    name,
-    sort_order: maxSort + 1 + idx,
+  const rows = missing.map(([nameKey, name], idx) => ({
+    ...buildDictionaryCreatePayload(name, maxSort + 1 + idx),
+    name_key: nameKey,
   }));
 
   await Promise.all(

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import Icon from "@/components/common/Icon";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
+import { getQuizValidationError } from "@/utils/quizValidation";
 
 const STEP_IDS = ["type", "direction", "budget", "contact"];
 const WORK_TYPES = ["Строительство", "Ремонт", "Дизайн", "Проектирование"];
@@ -11,11 +12,20 @@ function stepToForm(step, index) {
   if (!step) return null;
   const id = step.id ?? STEP_IDS[index] ?? `step_${index}`;
 
-  if (!step.options) {
+  if (id === "contact") {
     return {
       id,
       kind: "contact",
       question: typeof step.question === "string" ? step.question : "",
+    };
+  }
+
+  if (!step.options) {
+    return {
+      id,
+      kind: "simple",
+      question: typeof step.question === "string" ? step.question : "",
+      options: [],
     };
   }
 
@@ -354,7 +364,13 @@ export default function QuizEditor({
   };
 
   const removeStep = (index) => {
-    if (stepForms.length <= 1) return;
+    if (
+      stepForms.length <= 1 ||
+      stepForms[index]?.id === "type" ||
+      stepForms[index]?.kind === "contact"
+    ) {
+      return;
+    }
     setStepForms((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -369,6 +385,12 @@ export default function QuizEditor({
     const contactStep = steps.find((s) => !s.options);
     if (contactStep) {
       steps = [...steps.filter((s) => s.options), contactStep];
+    }
+
+    const validationError = getQuizValidationError({ steps });
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
 
     setSaving(true);
@@ -523,7 +545,11 @@ export default function QuizEditor({
                   <button
                     type="button"
                     onClick={() => removeStep(idx)}
-                    disabled={stepForms.length <= 1 || step.id === "type"}
+                    disabled={
+                      stepForms.length <= 1 ||
+                      step.id === "type" ||
+                      step.kind === "contact"
+                    }
                     className="rounded p-1 text-gray-400 hover:text-red-400 disabled:opacity-30"
                     title="Удалить шаг"
                   >

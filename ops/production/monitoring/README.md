@@ -1,8 +1,13 @@
 # Production monitoring and backups
 
-This baseline creates an online, consistent SQLite backup of PocketBase every
-day and records a five-minute nginx/PocketBase health check in the systemd
-journal. It deliberately stores backups locally with root-only permissions.
+This baseline creates a consistent PocketBase backup every day by briefly
+quiescing the PocketBase service, includes the uploaded files from
+`pb_data/storage`, and records a five-minute nginx/PocketBase health check in
+the systemd journal. Each backup is assembled in a private temporary directory
+and published with an atomic rename after its checksums are written.
+
+Set `POCKETBASE_DATA_ROOT` when PocketBase uses a data directory other than
+`/opt/pocketbase/pb_data`.
 
 ## Installation
 
@@ -20,6 +25,8 @@ systemctl list-timers 'husam-*'
 ## Off-site copy
 
 Local backups do not protect against loss of the VPS. Configure a separate
-S3-compatible bucket or another storage destination before adding transfer
-credentials. The bucket and retention policy must be chosen by the owner; do
-not put those credentials in Git or in the PocketBase database.
+S3-compatible bucket or another storage destination and copy the completed
+timestamped directory only after `SHA256SUMS` has been verified. The bucket
+and retention policy must be chosen by the owner; do not put those credentials
+in Git or in the PocketBase database. Perform a restore drill that verifies
+both SQLite files and `storage.tar.gz` before relying on the backup.

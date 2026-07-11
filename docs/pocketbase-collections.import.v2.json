@@ -1,11 +1,11 @@
 [
   {
     "id": "col_projects001",
-    "listRule": "published = true || @request.auth.id != ''",
-    "viewRule": "published = true || @request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "listRule": "published = true || @request.auth.collectionName = 'admins'",
+    "viewRule": "published = true || @request.auth.collectionName = 'admins'",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "projects",
     "type": "base",
     "fields": [
@@ -265,9 +265,9 @@
     "id": "col_ptypes0001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "project_types",
     "type": "base",
     "fields": [
@@ -292,6 +292,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "ptypes_nk0001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -333,17 +347,18 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_project_types_sort_order` ON `project_types` (`sort_order`)"
+      "CREATE INDEX `idx_project_types_sort_order` ON `project_types` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_project_types_name_key` ON `project_types` (`name_key`)"
     ],
     "system": false
   },
   {
     "id": "col_saleprj001",
-    "listRule": "published = true || @request.auth.id != ''",
-    "viewRule": "published = true || @request.auth.id != ''",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "listRule": "published = true || @request.auth.collectionName = 'admins'",
+    "viewRule": "published = true || @request.auth.collectionName = 'admins'",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_projects",
     "type": "base",
     "fields": [
@@ -900,9 +915,9 @@
     "id": "col_stypes0001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_types",
     "type": "base",
     "fields": [
@@ -927,6 +942,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "stypes_nk0001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -968,7 +997,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_types_sort_order` ON `sale_project_types` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_types_sort_order` ON `sale_project_types` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_types_name_key` ON `sale_project_types` (`name_key`)"
     ],
     "system": false
   },
@@ -976,9 +1006,9 @@
     "id": "col_spstyles01",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_styles",
     "type": "base",
     "fields": [
@@ -1003,6 +1033,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pstyle_nk001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1044,7 +1088,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_styles_sort_order` ON `sale_project_styles` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_styles_sort_order` ON `sale_project_styles` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_styles_name_key` ON `sale_project_styles` (`name_key`)"
     ],
     "system": false
   },
@@ -1052,9 +1097,9 @@
     "id": "col_spfound01",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_foundation_types",
     "type": "base",
     "fields": [
@@ -1079,6 +1124,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pfound_nk001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1120,7 +1179,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_foundation_types_sort_order` ON `sale_project_foundation_types` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_foundation_types_sort_order` ON `sale_project_foundation_types` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_foundation_types_name_key` ON `sale_project_foundation_types` (`name_key`)"
     ],
     "system": false
   },
@@ -1128,9 +1188,9 @@
     "id": "col_spwalls01",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_wall_materials",
     "type": "base",
     "fields": [
@@ -1155,6 +1215,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pwalls_nk001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1196,7 +1270,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_wall_materials_sort_order` ON `sale_project_wall_materials` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_wall_materials_sort_order` ON `sale_project_wall_materials` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_wall_materials_name_key` ON `sale_project_wall_materials` (`name_key`)"
     ],
     "system": false
   },
@@ -1204,9 +1279,9 @@
     "id": "col_sproof001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_roof_materials",
     "type": "base",
     "fields": [
@@ -1231,6 +1306,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "proof_nk001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1272,7 +1361,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_roof_materials_sort_order` ON `sale_project_roof_materials` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_roof_materials_sort_order` ON `sale_project_roof_materials` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_roof_materials_name_key` ON `sale_project_roof_materials` (`name_key`)"
     ],
     "system": false
   },
@@ -1280,9 +1370,9 @@
     "id": "col_spfacade1",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "sale_project_facade_materials",
     "type": "base",
     "fields": [
@@ -1307,6 +1397,20 @@
         "max": 255,
         "min": 1,
         "name": "name",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "pfacade_nk001",
+        "max": 255,
+        "min": 1,
+        "name": "name_key",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,
@@ -1348,7 +1452,8 @@
       }
     ],
     "indexes": [
-      "CREATE INDEX `idx_sale_project_facade_materials_sort_order` ON `sale_project_facade_materials` (`sort_order`)"
+      "CREATE INDEX `idx_sale_project_facade_materials_sort_order` ON `sale_project_facade_materials` (`sort_order`)",
+      "CREATE UNIQUE INDEX `idx_sale_project_facade_materials_name_key` ON `sale_project_facade_materials` (`name_key`)"
     ],
     "system": false
   },
@@ -1356,9 +1461,9 @@
     "id": "col_settngs001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "site_settings",
     "type": "base",
     "fields": [
@@ -1434,9 +1539,9 @@
     "id": "col_faq0000001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "faq",
     "type": "base",
     "fields": [
@@ -1521,9 +1626,9 @@
     "id": "col_pcontent001",
     "listRule": "",
     "viewRule": "",
-    "createRule": "@request.auth.id != ''",
-    "updateRule": "@request.auth.id != ''",
-    "deleteRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.collectionName = 'admins'",
+    "updateRule": "@request.auth.collectionName = 'admins'",
+    "deleteRule": "@request.auth.collectionName = 'admins'",
     "name": "page_content",
     "type": "base",
     "fields": [

@@ -5,6 +5,7 @@ import {
   useUnsavedChangesWarning,
   confirmDiscard,
 } from "@/hooks/useUnsavedChangesWarning";
+import UnsavedChangesNavigationWarning from "@/hooks/UnsavedChangesNavigationWarning";
 import {
   DndContext,
   closestCenter,
@@ -52,6 +53,7 @@ import {
   normalizeYesNoChoice,
 } from "@/utils/saleProjectFieldStructure";
 import { resizeImage } from "@/utils/imageResize";
+import { buildDictionaryCreatePayload } from "@/utils/dictionaryName";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -490,10 +492,9 @@ export default function SaleProjectForm({
         .getFirstListItem(`name = "${name.replace(/"/g, '\\"')}"`)
         .catch(() => null);
       if (!existing) {
-        await pb.collection("sale_project_types").create({
-          name,
-          sort_order: types.length,
-        });
+        await pb
+          .collection("sale_project_types")
+          .create(buildDictionaryCreatePayload(name, types.length));
       }
       await refetch();
       setForm((f) => ({ ...f, type: name }));
@@ -756,6 +757,7 @@ export default function SaleProjectForm({
       onChange={() => setDirty(true)}
       className="space-y-6"
     >
+      <UnsavedChangesNavigationWarning dirty={dirty} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-play text-xl font-bold text-white">
           {isEdit ? "Редактировать готовый проект" : "Новый готовый проект"}
@@ -1044,6 +1046,7 @@ export default function SaleProjectForm({
               <button
                 type="button"
                 onClick={addNewType}
+                aria-label="Добавить категорию"
                 className="rounded-xl border border-brand/30 px-3 text-brand hover:bg-brand/10"
               >
                 <Icon name="plus" className="h-4 w-4" />

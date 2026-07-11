@@ -1,6 +1,11 @@
 import { Suspense, lazy } from "react";
 import { Toaster } from "sonner";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Outlet,
+  RouterProvider,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import { useReveal } from "@/hooks/useReveal";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -35,6 +40,7 @@ import ProjectDetail from "@/pages/ProjectDetail";
 import Projects from "@/pages/Projects";
 import ProjectSaleDetail from "@/pages/ProjectSaleDetail";
 import LegalDocument from "@/pages/LegalDocument";
+import NotFound from "@/pages/NotFound";
 import { CONSENT_DOCUMENT, POLICY_DOCUMENT } from "@/data/legalDocuments";
 
 // Админ-панель (lazy)
@@ -111,57 +117,66 @@ function HomePage() {
   );
 }
 
+function AppShell() {
+  return (
+    <div className="min-h-screen w-full bg-ink text-white">
+      <ScrollRestoration />
+      <AnalyticsBridge />
+      <Header />
+      <main className="flex-1">
+        <Suspense fallback={<AdminLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      <Footer />
+      <ScrollToTop />
+      <CookieConsentBanner />
+      <PageLoader />
+      <Toaster richColors position="top-center" />
+    </div>
+  );
+}
+
+const router = createBrowserRouter(
+  [
+    {
+      element: <AppShell />,
+      children: [
+        { path: "/", element: <HomePage /> },
+        { path: "/projects", element: <Projects /> },
+        { path: "/projects/:projectId", element: <ProjectSaleDetail /> },
+        { path: "/catalog", element: <Catalog /> },
+        { path: "/catalog/:projectId", element: <ProjectDetail /> },
+        { path: "/privacy", element: <LegalDocument document={POLICY_DOCUMENT} /> },
+        { path: "/consent", element: <LegalDocument document={CONSENT_DOCUMENT} /> },
+        {
+          path: "/admin",
+          element: (
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          ),
+        },
+        { path: "/admin/login", element: <AdminLogin /> },
+        { path: "*", element: <NotFound /> },
+      ],
+    },
+  ],
+  {
+    basename: import.meta.env.BASE_URL,
+    future: {
+      v7_prependBasename: true,
+      v7_partialHydration: true,
+    },
+  },
+);
+
 function App() {
   return (
     <AuthProvider>
       <LoadingProvider>
-        <BrowserRouter
-        basename={import.meta.env.BASE_URL}
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <div className="min-h-screen w-full bg-ink text-white">
-          <ScrollRestoration />
-          <AnalyticsBridge />
-          <Header />
-          <main className="flex-1">
-            <Suspense fallback={<AdminLoader />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/projects/:projectId" element={<ProjectSaleDetail />} />
-                <Route path="/catalog" element={<Catalog />} />
-                <Route path="/catalog/:projectId" element={<ProjectDetail />} />
-                <Route
-                  path="/privacy"
-                  element={<LegalDocument document={POLICY_DOCUMENT} />}
-                />
-                <Route
-                  path="/consent"
-                  element={<LegalDocument document={CONSENT_DOCUMENT} />}
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/admin/login" element={<AdminLogin />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-          <ScrollToTop />
-          <CookieConsentBanner />
-          <PageLoader />
-          <Toaster richColors position="top-center" />
-        </div>
-      </BrowserRouter>
-    </LoadingProvider>
+        <RouterProvider router={router} />
+      </LoadingProvider>
     </AuthProvider>
   );
 }

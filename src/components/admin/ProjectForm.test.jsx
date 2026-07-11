@@ -128,4 +128,29 @@ describe("ProjectForm", () => {
     );
     expect(screen.getByRole("button", { name: /сохранить/i })).toBeEnabled();
   });
+
+  it("creates a new category with its normalized key", async () => {
+    const { create } = setupPocketbase();
+    const { container } = render(
+      <ProjectForm onSave={vi.fn()} onCancel={vi.fn()} />
+    );
+
+    fireEvent.change(container.querySelector("#project-type"), {
+      target: { value: "__new__" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Название категории"), {
+      target: { value: "  New category  " },
+    });
+    fireEvent.click(container.querySelector('button[aria-label="Добавить категорию"]'));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "New category",
+          name_key: "new category",
+        })
+      )
+    );
+    expect(container.querySelector("#project-new-type")).toBeNull();
+  });
 });

@@ -78,6 +78,7 @@ export default function ProjectDetail() {
   if (!project) {
     return (
       <section className="min-h-screen bg-[#2A2A28]/30 pt-8 pb-16 md:pt-12 md:pb-24">
+        <SeoHead title="Проект не найден" robots="noindex,nofollow" />
         <div className="container mx-auto px-6 md:px-10 lg:px-12 text-center">
           <Icon name="folder-x" className="mx-auto mb-6 h-20 w-20 text-gray-500" />
           <h1 className="font-play text-2xl font-bold text-white md:text-3xl">

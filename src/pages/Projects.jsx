@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Badge, Icon, Pagination } from "@/components/common";
 import { SaleProjectCard, SaleProjectCardSkeleton } from "@/components/sale";
 import SeoHead from "@/components/common/SeoHead";
@@ -76,7 +76,6 @@ function paramsToString(params) {
 }
 
 export default function Projects() {
-  const navigate = useNavigate();
   const { projects, loading, error } = useSaleProjects();
   const { types } = useSaleProjectTypes();
   const { settings } = useSiteSettings();
@@ -567,20 +566,11 @@ export default function Projects() {
                 {paginatedProjects.map((project) => (
                   <div
                     key={project.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() =>
-                      navigate(`/projects/${project.id}${detailSearchSuffix}`)
-                    }
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        navigate(`/projects/${project.id}${detailSearchSuffix}`);
-                      }
-                    }}
-                    className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink rounded-2xl"
+                    className="rounded-2xl"
                   >
                     <SaleProjectCard
                       project={project}
+                      titleHref={`/projects/${project.id}${detailSearchSuffix}`}
                       customFieldDefs={customFieldDefs}
                       onRequestClick={(selectedProject) =>
                         openMessenger(

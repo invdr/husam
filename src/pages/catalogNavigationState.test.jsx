@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Catalog from "./Catalog";
 import Projects from "./Projects";
 
@@ -42,12 +42,14 @@ vi.mock("@/hooks/useSiteSettings", () => ({
 }));
 
 vi.mock("@/components/catalog", () => ({
-  ProjectCard: ({ project }) => <article>{project.title}</article>,
+  ProjectCard: ({ project, titleHref }) =>
+    titleHref ? <Link to={titleHref}>{project.title}</Link> : <article>{project.title}</article>,
   ProjectCardSkeleton: () => null,
 }));
 
 vi.mock("@/components/sale", () => ({
-  SaleProjectCard: ({ project }) => <article>{project.title}</article>,
+  SaleProjectCard: ({ project, titleHref }) =>
+    titleHref ? <Link to={titleHref}>{project.title}</Link> : <article>{project.title}</article>,
   SaleProjectCardSkeleton: () => null,
 }));
 
@@ -122,7 +124,7 @@ describe("catalog navigation state", () => {
     expect(await screen.findByText("Catalog project 13")).toBeInTheDocument();
     expect(screen.queryByText("Catalog project 1")).not.toBeInTheDocument();
 
-    await user.click(screen.getByText("Catalog project 13"));
+    await user.click(screen.getByRole("link", { name: "Catalog project 13" }));
 
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(
@@ -147,7 +149,7 @@ describe("catalog navigation state", () => {
     expect(await screen.findByText("Sale project 13")).toBeInTheDocument();
     expect(screen.queryByText("Sale project 1")).not.toBeInTheDocument();
 
-    await user.click(screen.getByText("Sale project 13"));
+    await user.click(screen.getByRole("link", { name: "Sale project 13" }));
 
     await waitFor(() =>
       expect(screen.getByTestId("location")).toHaveTextContent(

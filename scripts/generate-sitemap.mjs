@@ -1,8 +1,6 @@
-// Генерирует sitemap.xml со статическими маршрутами и детальными страницами
-// каталога (/catalog/:id) и готовых проектов (/projects/:id) из PocketBase.
-// Использование: node scripts/generate-sitemap.mjs [путь к файлу, по умолчанию dist/sitemap.xml]
-// Env: SITE_URL (по умолчанию https://husam.ru), POCKETBASE_URL или VITE_POCKETBASE_URL.
-// При недоступности PocketBase пишет sitemap только со статическими маршрутами.
+// Generate sitemap.xml with static routes and published project detail routes.
+// When PocketBase is configured, a project-fetch failure aborts generation so
+// deploy cannot publish a sitemap that silently omits all dynamic URLs.
 
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -61,25 +59,21 @@ async function main() {
   const entries = STATIC_ROUTES.map((route) => urlEntry(route.path, route.priority));
 
   if (pocketbaseUrl) {
-    try {
-      const [catalogIds, saleIds] = await Promise.all([
-        fetchPublishedIds("projects"),
-        fetchPublishedIds("sale_projects"),
-      ]);
-      for (const id of catalogIds) {
-        entries.push(urlEntry(`/catalog/${encodeURIComponent(id)}`, "0.7"));
-      }
-      for (const id of saleIds) {
-        entries.push(urlEntry(`/projects/${encodeURIComponent(id)}`, "0.7"));
-      }
-      console.log(
-        `sitemap: добавлено ${catalogIds.length} страниц каталога и ${saleIds.length} готовых проектов`
-      );
-    } catch (error) {
-      console.warn(`sitemap: не удалось получить проекты из PocketBase (${error.message}), пишем только статические маршруты`);
+    const [catalogIds, saleIds] = await Promise.all([
+      fetchPublishedIds("projects"),
+      fetchPublishedIds("sale_projects"),
+    ]);
+    for (const id of catalogIds) {
+      entries.push(urlEntry(`/catalog/${encodeURIComponent(id)}`, "0.7"));
     }
+    for (const id of saleIds) {
+      entries.push(urlEntry(`/projects/${encodeURIComponent(id)}`, "0.7"));
+    }
+    console.log(
+      `sitemap: added ${catalogIds.length} catalog and ${saleIds.length} sale project URLs`,
+    );
   } else {
-    console.warn("sitemap: POCKETBASE_URL не задан, пишем только статические маршруты");
+    console.warn("sitemap: POCKETBASE_URL is not set; using static routes only");
   }
 
   const xml =
@@ -90,10 +84,10 @@ async function main() {
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, xml, "utf8");
-  console.log(`sitemap: записан ${outputPath} (${entries.length} URL)`);
+  console.log(`sitemap: wrote ${outputPath} (${entries.length} URLs)`);
 }
 
 main().catch((error) => {
-  console.error(`sitemap: ошибка — ${error.message}`);
+  console.error(`sitemap: failed — ${error.message}`);
   process.exit(1);
 });

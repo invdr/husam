@@ -142,4 +142,29 @@ describe("SaleProjectForm", () => {
     );
   });
 
+  it("creates a new category with its normalized key", async () => {
+    const { create } = setupPocketbase();
+    const { container } = render(
+      <SaleProjectForm onSave={vi.fn()} onCancel={vi.fn()} />
+    );
+
+    fireEvent.change(container.querySelector("#sale-project-type"), {
+      target: { value: "__new__" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Новая категория"), {
+      target: { value: "  New category  " },
+    });
+    fireEvent.click(container.querySelector('button[aria-label="Добавить категорию"]'));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "New category",
+          name_key: "new category",
+        })
+      )
+    );
+    expect(container.querySelector("#sale-project-new-type")).toBeNull();
+  });
+
 });

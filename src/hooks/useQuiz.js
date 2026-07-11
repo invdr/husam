@@ -3,6 +3,7 @@ import { pb } from "@/lib/pocketbase";
 import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 import { QUIZ_DEFAULTS } from "@/data/quizDefaults";
+import { isValidQuizConfig } from "@/utils/quizValidation";
 
 const QUIZ_KEY = "quiz_config";
 
@@ -37,12 +38,14 @@ function parseQuizConfig(value) {
       }
     }
 
-    return {
+    const config = {
       badge: parsed.badge ?? QUIZ_DEFAULTS.badge,
       title: parsed.title ?? QUIZ_DEFAULTS.title,
       subtitle: parsed.subtitle ?? QUIZ_DEFAULTS.subtitle,
       steps: normalizedSteps,
     };
+
+    return isValidQuizConfig(config) ? config : QUIZ_DEFAULTS;
   } catch {
     return QUIZ_DEFAULTS;
   }

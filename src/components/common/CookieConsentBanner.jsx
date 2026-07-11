@@ -1,25 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const COOKIE_CONSENT_KEY = "husam_cookie_consent_v1";
+import {
+  getCookieConsent,
+  setCookieConsent,
+} from "@/lib/cookieConsent";
 
 export default function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    try {
-      setVisible(window.localStorage.getItem(COOKIE_CONSENT_KEY) !== "accepted");
-    } catch {
-      setVisible(true);
-    }
+    setVisible(getCookieConsent() === null);
   }, []);
 
-  const acceptCookies = () => {
-    try {
-      window.localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
-    } catch {
-      // Если localStorage недоступен, просто скрываем плашку на текущей странице.
-    }
+  const chooseConsent = (value) => {
+    setCookieConsent(value);
     setVisible(false);
   };
 
@@ -36,13 +30,22 @@ export default function CookieConsentBanner() {
           </Link>
           .
         </p>
-        <button
-          type="button"
-          onClick={acceptCookies}
-          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-ink transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
-        >
-          ОК
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => chooseConsent("rejected")}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+          >
+            Отклонить
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseConsent("accepted")}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-ink transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+          >
+            Принять
+          </button>
+        </div>
       </div>
     </div>
   );

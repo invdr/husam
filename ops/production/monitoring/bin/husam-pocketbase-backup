@@ -5,26 +5,43 @@ readonly backup_root="${BACKUP_ROOT:-/var/backups/husam/pocketbase}"
 readonly retention_days="${BACKUP_RETENTION_DAYS:-14}"
 readonly timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 readonly destination="${backup_root}/${timestamp}"
+readonly pocketbase_data_root="${POCKETBASE_DATA_ROOT:-/opt/pocketbase/pb_data}"
+readonly temporary_destination="${backup_root}/.${timestamp}.tmp.$$"
+readonly pocketbase_service="${POCKETBASE_SERVICE:-pocketbase.service}"
+
+pocketbase_was_active=false
+
+restore_pocketbase() {
+  if [[ "${pocketbase_was_active}" == "true" ]]; then
+    systemctl start "${pocketbase_service}"
+  fi
+}
 
 umask 077
 install -d -m 700 "${backup_root}"
 exec 9>"/run/lock/husam-pocketbase-backup.lock"
 flock -n 9 || exit 0
 
-install -d -m 700 "${destination}"
+install -d -m 700 "${temporary_destination}"
+trap 'restore_pocketbase; rm -rf -- "${temporary_destination}"' EXIT
 
-# sqlite3 is not installed on the VPS. The Python sqlite backup API is an
-# online, transactionally-consistent backup and does not require stopping
-# PocketBase.
-python3 - "${destination}" <<'PY'
+if systemctl is-active --quiet "${pocketbase_service}"; then
+  systemctl stop "${pocketbase_service}"
+  pocketbase_was_active=true
+fi
+
+# sqlite3 is not installed on the VPS. PocketBase is already quiesced above,
+# and the Python sqlite backup API keeps the database copy consistent.
+python3 - "${temporary_destination}" "${pocketbase_data_root}" <<'PY'
 import sqlite3
 import sys
 from pathlib import Path
 
 destination = Path(sys.argv[1])
+data_root = Path(sys.argv[2])
 for filename in ("data.db", "auxiliary.db"):
     source = sqlite3.connect(
-        f"file:/opt/pocketbase/pb_data/{filename}?mode=ro", uri=True
+        f"file:{data_root / filename}?mode=ro", uri=True
     )
     target = sqlite3.connect(destination / filename)
     try:
@@ -34,5 +51,10 @@ for filename in ("data.db", "auxiliary.db"):
         source.close()
 PY
 
-sha256sum "${destination}/data.db" "${destination}/auxiliary.db" > "${destination}/SHA256SUMS"
+tar --create --gzip --file "${temporary_destination}/storage.tar.gz" \
+  --directory "${pocketbase_data_root}" storage
+
+(cd "${temporary_destination}" && sha256sum data.db auxiliary.db storage.tar.gz > SHA256SUMS)
+
+mv -- "${temporary_destination}" "${destination}"
 find "${backup_root}" -mindepth 1 -maxdepth 1 -type d -mtime "+${retention_days}" -exec rm -rf {} +

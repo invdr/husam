@@ -27,20 +27,26 @@ export default function SeoHead({
   image,
   url,
   type = "website",
+  robots = "index,follow,max-image-preview:large",
 }) {
   const siteTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const absoluteImage = image ? toAbsoluteImageUrl(image) : toAbsoluteImageUrl(DEFAULT_OG_IMAGE);
   const absoluteUrl = url
     ? (url.startsWith("http") ? url : `${typeof window !== "undefined" ? window.location.origin : ""}${url}`)
     : typeof window !== "undefined"
-      ? window.location.href
+      ? (() => {
+          const canonicalUrl = new URL(window.location.href);
+          canonicalUrl.search = "";
+          canonicalUrl.hash = "";
+          return canonicalUrl.toString();
+        })()
       : null;
 
   return (
     <Helmet>
       <title>{siteTitle}</title>
       <meta name="description" content={description} />
-      <meta name="robots" content="index,follow,max-image-preview:large" />
+      <meta name="robots" content={robots} />
       {absoluteUrl && <link rel="canonical" href={absoluteUrl} />}
       {absoluteUrl && <link rel="alternate" hrefLang="ru-RU" href={absoluteUrl} />}
       <meta property="og:type" content={type} />

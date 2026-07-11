@@ -41,6 +41,10 @@ function toText(value) {
   return String(value);
 }
 
+function normalizeDictionaryName(value) {
+  return toText(value).normalize("NFKC").trim().toLocaleLowerCase("ru-RU");
+}
+
 function asJsonObject(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value;
   return {};
@@ -285,6 +289,7 @@ async function run() {
       keyField: "name",
       mapRow: (row) => ({
         name: toText(row.name),
+        name_key: normalizeDictionaryName(row.name),
         sort_order: Number.isFinite(row.sort_order) ? row.sort_order : 999,
       }),
     },
@@ -294,6 +299,7 @@ async function run() {
       keyField: "name",
       mapRow: (row) => ({
         name: toText(row.name),
+        name_key: normalizeDictionaryName(row.name),
         sort_order: Number.isFinite(row.sort_order) ? row.sort_order : 999,
       }),
     },

@@ -25,7 +25,7 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/husam.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/husam.ru/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
+    include /etc/nginx/snippets/husam-tls-policy.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     include /etc/nginx/snippets/husam-frontend-security.conf;

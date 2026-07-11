@@ -5,6 +5,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/common";
+import { Link } from "react-router-dom";
 import ProjectImage from "./ProjectImage";
 import { getCardDisplayFields } from "@/utils/catalogAttributes";
 
@@ -14,6 +15,7 @@ export default function ProjectCard({
   imageOverlay,
   imageOverlayTopLeft,
   showDetails = true,
+  titleHref,
 }) {
   return (
     <Card variant="listing">
@@ -35,7 +37,16 @@ export default function ProjectCard({
       </div>
       <CardHeader variant="listing">
         <CardTitle variant="listing" title={project.title}>
-          {project.title}
+          {titleHref ? (
+            <Link
+              to={titleHref}
+              className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            >
+              {project.title}
+            </Link>
+          ) : (
+            project.title
+          )}
         </CardTitle>
         <CardDescription variant="listingClamped" title={project.type}>
           {project.type}

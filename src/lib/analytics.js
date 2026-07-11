@@ -1,3 +1,5 @@
+import { getCookieConsent } from "@/lib/cookieConsent";
+
 export const GOALS = {
   PHONE_CLICK: "click_phone",
   MESSENGER_CLICK: "click_messenger",
@@ -18,7 +20,14 @@ function getCounterId() {
 
 export function initAnalytics() {
   const counterId = getCounterId();
-  if (!counterId || initialized || typeof window === "undefined") return;
+  if (
+    !counterId ||
+    initialized ||
+    typeof window === "undefined" ||
+    getCookieConsent() !== "accepted"
+  ) {
+    return false;
+  }
 
   initialized = true;
 
@@ -43,18 +52,33 @@ export function initAnalytics() {
     trackLinks: true,
     webvisor: false,
   });
+
+  return true;
 }
 
 export function trackPageView(path) {
   const counterId = getCounterId();
-  if (!counterId || typeof window === "undefined") return;
+  if (
+    !counterId ||
+    typeof window === "undefined" ||
+    getCookieConsent() !== "accepted"
+  ) {
+    return;
+  }
   initAnalytics();
   window.ym?.(counterId, "hit", path || window.location.href);
 }
 
 export function reachGoal(goal, params = {}) {
   const counterId = getCounterId();
-  if (!counterId || !goal || typeof window === "undefined") return;
+  if (
+    !counterId ||
+    !goal ||
+    typeof window === "undefined" ||
+    getCookieConsent() !== "accepted"
+  ) {
+    return;
+  }
   initAnalytics();
   window.ym?.(counterId, "reachGoal", goal, params);
 }

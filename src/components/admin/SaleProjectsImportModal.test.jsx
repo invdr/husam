@@ -73,7 +73,12 @@ function setupPocketbase({ existingIdsByCall = [[]], createImpl } = {}) {
     throw new Error(`Unexpected collection "${name}"`);
   });
 
-  return { saleProjectsGetFullList, saleProjectsCreate, saleProjectsGetFirstListItem };
+  return {
+    saleProjectsGetFullList,
+    saleProjectsCreate,
+    saleProjectsGetFirstListItem,
+    typesCreate,
+  };
 }
 
 function getFileInput(container) {
@@ -105,7 +110,7 @@ describe("SaleProjectsImportModal", () => {
     // Первый вызов (при выборе файла) — в базе ничего нет.
     // Второй вызов (в начале handleImport) — SP-100 уже кем-то создан,
     // то есть снапшот, снятый при выборе файла, устарел.
-    const { saleProjectsGetFullList, saleProjectsCreate } = setupPocketbase({
+    const { saleProjectsGetFullList, saleProjectsCreate, typesCreate } = setupPocketbase({
       existingIdsByCall: [[], ["SP-100"]],
     });
 
@@ -132,6 +137,9 @@ describe("SaleProjectsImportModal", () => {
     expect(saleProjectsCreate.mock.calls[0][0]).toMatchObject({
       external_id: "SP-101",
     });
+    expect(typesCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Houses", name_key: "houses" })
+    );
     expect(toastMock.success.mock.calls[0][0]).toContain("Создано: 1");
     expect(toastMock.success.mock.calls[0][0]).toContain("пропущено: 1");
   });

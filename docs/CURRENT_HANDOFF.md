@@ -27,9 +27,9 @@ There is currently no `AGENTS.md` in this repository.
 ## Critical TLS Note
 
 - Production HTTPS must stay **TLS 1.2-only**.
-- Do not switch `/etc/letsencrypt/options-ssl-nginx.conf` back to `ssl_protocols TLSv1.2 TLSv1.3;`.
+- Do not change `ops/production/nginx/snippets/husam-tls-policy.conf` to enable TLS 1.3 without repeating the affected mobile validation.
 - The affected mobile route fails with TLS 1.3, including for a bare `OK` response. It works after forcing `ssl_protocols TLSv1.2;`.
-- HTTP is intentionally still available. Do not enable HTTP-to-HTTPS redirect without a fresh mobile check.
+- HTTP is redirected to HTTPS by the maintained nginx configuration. Keep this policy aligned with HSTS and re-run the TLS 1.2 mobile check after any TLS or redirect change.
 
 Current required server state:
 

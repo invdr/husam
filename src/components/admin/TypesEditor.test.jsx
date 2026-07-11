@@ -9,6 +9,7 @@ const toastMock = vi.hoisted(() => ({
 
 const pbMock = vi.hoisted(() => ({
   collection: vi.fn(),
+  createBatch: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -24,6 +25,9 @@ function setupPocketbase() {
   const getFirstListItem = vi.fn(async () => ({ id: "type_rec_1" }));
   const update = vi.fn(async () => ({}));
   const create = vi.fn(async () => ({}));
+  const batchUpdate = vi.fn();
+  const batchCreate = vi.fn();
+  const send = vi.fn(async () => ({}));
 
   pbMock.collection.mockImplementation(() => ({
     getFullList,
@@ -31,8 +35,15 @@ function setupPocketbase() {
     update,
     create,
   }));
+  pbMock.createBatch.mockReturnValue({
+    collection: vi.fn(() => ({
+      update: batchUpdate,
+      create: batchCreate,
+    })),
+    send,
+  });
 
-  return { getFullList, getFirstListItem, update, create };
+  return { getFullList, getFirstListItem, update, create, batchUpdate, send };
 }
 
 beforeEach(() => {
@@ -64,7 +75,7 @@ describe("TypesEditor", () => {
   });
 
   it("allows renaming a category to a genuinely new name", async () => {
-    const { update } = setupPocketbase();
+    const { batchUpdate } = setupPocketbase();
 
     render(
       <TypesEditor
@@ -79,7 +90,7 @@ describe("TypesEditor", () => {
     fireEvent.change(input, { target: { value: "Стройка" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    await waitFor(() => expect(update).toHaveBeenCalled());
+    await waitFor(() => expect(batchUpdate).toHaveBeenCalled());
     expect(toastMock.success).toHaveBeenCalled();
   });
 });
