@@ -15,14 +15,15 @@ There is currently no `AGENTS.md` in this repository.
 ## Current State
 
 - Branch: `main`
-- Latest deployed frontend commit: `e2a9e41 fix: restore project card navigation`.
-- Project images and titles link to detail pages in the home portfolio,
-  `/catalog`, and `/projects` while carousel controls remain independent.
+- Latest deployed frontend commit: `7eba089 fix: make project cards fully clickable`.
+- Project images, titles, and non-interactive card content link to detail pages in
+  the home portfolio, `/catalog`, and `/projects`; carousel controls and project
+  CTA buttons remain independent.
 - Production site: `https://husam.ru` and `http://husam.ru`
 - Production frontend server: `77.222.63.88`
 - Production frontend directory: `/var/www/husam-stroy`
 - Backend/API/files: PocketBase via nginx at `https://husam.ru/api/` and `https://api.husam.ru/`; HTTP equivalents remain available.
-- Current production frontend bundle: `assets/index-C-jw6LJU.js`
+- Current production frontend bundle: `assets/index-CgGF1gMN.js`
 - PocketBase client resolves to same-origin `/` on `husam.ru`, `www.husam.ru`, and `77.222.63.88`; PocketBase SDK appends `/api/...` itself. Other hosts fall back to `https://api.husam.ru` unless `VITE_POCKETBASE_URL` is set.
 
 ## Critical TLS Note
@@ -99,16 +100,18 @@ Do not store SSH passwords, tokens, or private keys in docs or code.
 
 ## Last Known Checks
 
-After the project-card navigation fix on 2026-07-11:
+After the full-card navigation fix on 2026-07-11:
 
-- `npm test` passed: 182 tests.
+- `npm test` passed: 185 tests.
 - `npm run lint` passed.
-- `POCKETBASE_URL=https://api.husam.ru npm run build` passed; sitemap contains
-  187 URLs.
-- Local browser smoke tests passed for image navigation from the home portfolio,
-  `/catalog`, and `/projects`; carousel arrows continued to change images without
-  navigating.
-- GitHub Actions verify and deploy passed on run `29145542975`, attempt 4.
+- `npm run build` passed locally; the production workflow generated the full
+  sitemap using `https://api.husam.ru`.
+- Unit coverage confirms that non-interactive card content navigates while the
+  `Хочу` CTA remains independent.
+- GitHub Actions verify and deploy passed on run `29152591695`.
+- Production browser smoke on `/projects?type=all&sort=default` loaded
+  `assets/index-CgGF1gMN.js`; clicking the `Площадь дома` field in the first card
+  navigated to `/projects/W-312-GNT?type=all&sort=default`.
 - Production `/`, `/catalog/DV-114`, `/projects/W-312-GNT`, and both PocketBase
   health endpoints returned `200`; HTTP redirects to HTTPS with `301`.
 - `/var/www/husam-stroy` and its deployed directories are owned by
@@ -151,5 +154,9 @@ After admin/data changes:
 - Do not re-enable TLS 1.3 on production HTTPS.
 - `docs/GOOGLE_SETUP.md`, `docs/QUICK_START.md`, `docs/TEST_DATA.md`, and `docs/MIGRATION_CHECKLIST.md` are archive documents, not current workflow.
 - Local `npm run build` writes a static-only sitemap unless `POCKETBASE_URL` or `VITE_POCKETBASE_URL` is available.
-- Production deploy is manual `rsync` to VPS, not Vercel/Netlify automation.
+- Production `index.html` currently has no explicit `Cache-Control` header, so a
+  browser tab opened shortly before a deploy may need one reload to receive the
+  new hashed bundle.
+- Production deploy runs through `.github/workflows/deploy-frontend.yml` on pushes
+  to `main`; the documented manual `rsync` command is the fallback path.
 - Keep docs updated when deployment path, PocketBase schema, or route/state contracts change.
