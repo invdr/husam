@@ -85,5 +85,18 @@ describe("catalogSort", () => {
         "build-1",
       ]);
     });
+
+    it("сортирует смешанные сроки в месяцах и годах по общей шкале", () => {
+      const ascending = getCatalogSortComparator("duration-asc");
+      const tenMonths = { id: "10m", attributes: { duration: "10 месяцев" } };
+      const oneYear = { id: "1y", attributes: { duration: "1 год" } };
+      const compound = { id: "18m", attributes: { duration: "1 год 6 месяцев" } };
+
+      expect(
+        [compound, oneYear, tenMonths]
+          .sort(ascending)
+          .map((item) => item.id),
+      ).toEqual(["10m", "1y", "18m"]);
+    });
   });
 });

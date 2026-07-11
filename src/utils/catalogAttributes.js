@@ -3,11 +3,18 @@
  * Используется в ProjectCard, ProjectModal и ProjectForm.
  */
 
-import { toComparableNumber } from "./saleProjectAttributes.js";
+import {
+  toComparableNumber,
+  toDurationMonths,
+} from "./saleProjectAttributes.js";
 
 export const CATALOG_TYPE_DESIGN = "Дизайн проекты";
 export const CATALOG_TYPE_REPAIR = "Ремонт";
 export const CATALOG_TYPE_BUILD = "Строительство";
+
+export function normalizeCatalogProjectType(type) {
+  return type === "Дизайн" ? CATALOG_TYPE_DESIGN : type;
+}
 
 /** Варианты "Тип объекта" для Дизайн */
 export const DESIGN_OBJECT_TYPES = [
@@ -131,7 +138,8 @@ export function getCatalogSortBudgetComparable(project) {
  */
 export function getCatalogSortDurationComparable(project) {
   const att = project?.attributes ?? {};
-  return toComparableNumber(att.duration ?? project?.duration ?? "");
+  const attributeDuration = String(att.duration ?? "").trim();
+  return toDurationMonths(attributeDuration ? att.duration : project?.duration || "");
 }
 
 /**

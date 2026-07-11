@@ -133,6 +133,7 @@ export function normalizeSaleProject(row) {
 // Кэш последней успешной выборки на уровне модуля: при повторном маунте
 // данные показываются сразу, без скелетонов, а свежая выборка идёт в фоне.
 let saleProjectsCache = null;
+let saleProjectTypesCache = null;
 
 /**
  * Загружает готовые проекты на продажу (sale_projects) из PocketBase
@@ -140,11 +141,25 @@ let saleProjectsCache = null;
  */
 export function useSaleProjects() {
   const [projects, setProjects] = useState(() => saleProjectsCache ?? []);
-  const [loading, setLoading] = useState(() => saleProjectsCache === null);
+  const [types, setTypes] = useState(() => saleProjectTypesCache ?? []);
+  const [loading, setLoading] = useState(
+    () => saleProjectsCache === null || saleProjectTypesCache === null,
+  );
+  // Cache ускоряет повторный mount, но не считается основанием для удаления
+  // параметров deep-link до успешного refresh обеих коллекций.
+  const [isAuthoritative, setIsAuthoritative] = useState(false);
   const [error, setError] = useState(null);
   const fetchSeq = useRef(0);
 
-  const fetchProjects = useCallback(async (isInitial = false) => {
+  const fetchProjects = useCallback(async (
+    isInitial = false,
+    promoteAuthority = true,
+  ) => {
+    if (!isInitial) {
+      // До атомарного обновления sale_projects + sale_project_types старый
+      // snapshot остаётся пригоден для показа, но не для изменения URL.
+      setIsAuthoritative(false);
+    }
     // autoCancellation у PocketBase отключён, поэтому защищаемся от гонки
     // сами: ответ применяется только если за время ожидания не стартовал
     // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
@@ -171,9 +186,14 @@ export function useSaleProjects() {
           typeRow.sort_order ?? index,
         ])
       );
+      const configuredTypes = new Set(typeOrder.keys());
+      const nextTypes = (typesData || [])
+        .map((typeRow) => typeRow.name)
+        .filter(Boolean);
 
       const normalized = (projectsData || [])
         .map(normalizeSaleProject)
+        .filter((project) => configuredTypes.has(project.type))
         .sort((a, b) => {
           const orderA = typeOrder.get(a.type) ?? 999;
           const orderB = typeOrder.get(b.type) ?? 999;
@@ -182,16 +202,20 @@ export function useSaleProjects() {
         });
 
       saleProjectsCache = normalized;
+      saleProjectTypesCache = nextTypes;
       setProjects(normalized);
+      setTypes(nextTypes);
       setError(null);
+      if (promoteAuthority) setIsAuthoritative(true);
     } catch (err) {
       if (isPocketbaseAbortError(err)) {
         return;
       }
       if (seq !== fetchSeq.current) return;
-      saleProjectsCache = null;
       setError(err);
-      setProjects([]);
+      // Сохраняем последний успешный snapshot, но не используем его для
+      // разрушительной канонизации URL после неудачного refresh.
+      setIsAuthoritative(false);
     } finally {
       if (isInitial) setLoading(false);
     }
@@ -202,7 +226,9 @@ export function useSaleProjects() {
     let removeChannel = () => {};
 
     (async function init() {
-      await fetchProjects(true);
+      // Начальный snapshot ускоряет показ, но не считается окончательным до
+      // установки обеих realtime-подписок.
+      await fetchProjects(true, false);
       if (cancelled) return;
 
       const unsubscribe = await subscribeToPocketbaseCollections(
@@ -218,9 +244,12 @@ export function useSaleProjects() {
       removeChannel = () => {
         unsubscribe();
       };
+      // Закрываем fetch→subscribe gap вторым атомарным чтением.
+      await fetchProjects(false, true);
     })().catch((err) => {
       if (!cancelled && !isPocketbaseAbortError(err)) {
         setError(err);
+        setIsAuthoritative(false);
       }
     });
 
@@ -230,5 +259,5 @@ export function useSaleProjects() {
     };
   }, [fetchProjects]);
 
-  return { projects, loading, error };
+  return { projects, types, loading, isAuthoritative, error };
 }

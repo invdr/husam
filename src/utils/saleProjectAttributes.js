@@ -99,6 +99,25 @@ export function toComparableNumber(value) {
   return numeric;
 }
 
+export function toDurationMonths(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return 0;
+  const numberFromMatch = (match) =>
+    match ? Number.parseFloat(match[1].replace(",", ".")) : 0;
+  const years = numberFromMatch(
+    normalized.match(
+      /(\d+(?:[.,]\d+)?)\s*(?:г(?:од(?:а|ов)?)?\.?|лет|years?)/i,
+    ),
+  );
+  const months = numberFromMatch(
+    normalized.match(
+      /(\d+(?:[.,]\d+)?)\s*(?:мес(?:яц(?:а|ев)?)?\.?|months?)/i,
+    ),
+  );
+  if (years > 0) return years * 12 + months;
+  return toComparableNumber(normalized);
+}
+
 export function formatPrice(value) {
   const numeric = toComparableNumber(value);
   if (!numeric) return "Стоимость по запросу";
@@ -207,7 +226,7 @@ export function getSaleDisplayFields(project, customFieldDefs = EMPTY_CUSTOM_FIE
   );
   const base = [
     { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
-    { label: "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043f\u0430\u043b\u0435\u043d", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms) },
+    { label: "Спальни", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms) },
     { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
     { label: "\u0421\u0442\u0435\u043d\u044b", value: withPlaceholder(project.material_walls ?? project.material) },
     { label: "\u0413\u0430\u0440\u0430\u0436", value: withPlaceholder(project.garage ?? attrs.garage) },
@@ -238,7 +257,7 @@ export function getSaleCardDisplayFields(project, customFieldDefs = EMPTY_CUSTOM
   const base = [
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0434\u043e\u043c\u0430", value: withPlaceholder(project.house_area || project.area) },
     { label: "\u042d\u0442\u0430\u0436\u0435\u0439", value: withPlaceholder(project.floors) },
-    { label: "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0441\u043f\u0430\u043b\u0435\u043d", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms ?? project.rooms) },
+    { label: "Спальни", value: withPlaceholder(project.bedrooms ?? attrs.bedrooms ?? project.rooms) },
     { label: "\u0421\u0442\u0435\u043d\u044b", value: withPlaceholder(wallMaterial) },
     { label: "\u0421\u0442\u0438\u043b\u044c", value: withPlaceholder(project.style ?? attrs.style) },
     { label: "\u041f\u043b\u043e\u0449\u0430\u0434\u044c \u0443\u0447\u0430\u0441\u0442\u043a\u0430", value: withPlaceholder(project.plot_area) },
@@ -275,6 +294,13 @@ const ROOMS_RANGE_SPECS = [
   { value: "2-3", label: "2 – 3", min: 2, max: 3 },
   { value: "4-5", label: "4 – 5", min: 4, max: 5 },
   { value: "6-99", label: "6+", min: 6, max: 99 },
+];
+
+const PRICE_RANGE_SPECS = [
+  { value: "0-29999", label: "до 30 000 ₽", min: 0, max: 29999 },
+  { value: "30000-39999", label: "30 000 – 40 000 ₽", min: 30000, max: 39999 },
+  { value: "40000-49999", label: "40 000 – 50 000 ₽", min: 40000, max: 49999 },
+  { value: "50000-999999999", label: "от 50 000 ₽", min: 50000, max: 999999999 },
 ];
 
 /**
@@ -326,7 +352,7 @@ export function getFilterFloorsFromProjects(projects) {
   const sorted = Array.from(set).sort((a, b) => byNum(a) - byNum(b));
   const labels = { "1": "1 этаж", "2": "2 этажа", "1-2": "1 – 2", "3": "3 и более" };
   return [
-    { value: FILTER_ANY, label: "Любое" },
+    { value: FILTER_ANY, label: "Любые" },
     ...sorted.map((v) => ({ value: v, label: labels[v] || v })),
   ];
 }
@@ -337,13 +363,27 @@ export function getFilterFloorsFromProjects(projects) {
  * @returns {Array<{ value: string, label: string }>}
  */
 export function getFilterRoomsFromProjects(projects) {
-  const list = [{ value: FILTER_ANY, label: "Любое" }];
+  const list = [{ value: FILTER_ANY, label: "Любые" }];
   for (const spec of ROOMS_RANGE_SPECS) {
     const hasProject = (projects || []).some((p) => {
       const rooms = p.bedrooms ?? p.rooms;
       if (!hasComparableNumber(rooms)) return false;
       const num = toComparableNumber(rooms);
       return num >= spec.min && num <= spec.max;
+    });
+    if (hasProject) list.push({ value: spec.value, label: spec.label });
+  }
+  return list;
+}
+
+/** Варианты стоимости: только диапазоны, в которых есть проекты. */
+export function getFilterPriceRangesFromProjects(projects) {
+  const list = [{ value: FILTER_ANY, label: "Любая" }];
+  for (const spec of PRICE_RANGE_SPECS) {
+    const hasProject = (projects || []).some((project) => {
+      if (!hasComparableNumber(project?.price)) return false;
+      const price = toComparableNumber(project.price);
+      return price >= spec.min && price <= spec.max;
     });
     if (hasProject) list.push({ value: spec.value, label: spec.label });
   }
@@ -400,6 +440,16 @@ export function matchRoomsFilter(project, rangeValue) {
   const [min, max] = rangeValue.split("-").map(Number);
   if (min != null && num < min) return false;
   if (max != null && num > max) return false;
+  return true;
+}
+
+export function matchPriceFilter(project, rangeValue) {
+  if (!rangeValue) return true;
+  if (!hasComparableNumber(project?.price)) return false;
+  const price = toComparableNumber(project.price);
+  const [min, max] = rangeValue.split("-").map(Number);
+  if (Number.isFinite(min) && price < min) return false;
+  if (Number.isFinite(max) && price > max) return false;
   return true;
 }
 

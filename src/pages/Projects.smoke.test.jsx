@@ -6,14 +6,9 @@ import Projects from "./Projects";
 vi.mock("@/hooks/useSaleProjects", () => ({
   useSaleProjects: () => ({
     projects: [],
+    types: [],
     loading: false,
     error: new Error("smoke"),
-  }),
-}));
-
-vi.mock("@/hooks/useSaleProjectTypes", () => ({
-  useSaleProjectTypes: () => ({
-    types: [],
   }),
 }));
 

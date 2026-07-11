@@ -5,6 +5,7 @@ import {
   isPocketbaseAbortError,
   subscribeToPocketbaseCollections,
 } from "@/hooks/pocketbaseRealtime";
+import { normalizeCatalogProjectType } from "@/utils/catalogAttributes";
 
 function parseMaybeJsonObject(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value;
@@ -62,6 +63,7 @@ export function normalizeProject(row) {
 // (переходы Каталог → проект → Каталог) данные показываются сразу, без
 // скелетонов, а свежая выборка выполняется в фоне.
 let projectsCache = null;
+let projectTypesCache = null;
 
 /**
  * Загружает проекты из PocketBase.
@@ -70,11 +72,26 @@ let projectsCache = null;
  */
 export function useProjects() {
   const [projects, setProjects] = useState(() => projectsCache ?? []);
-  const [loading, setLoading] = useState(() => projectsCache === null);
+  const [types, setTypes] = useState(() => projectTypesCache ?? []);
+  const [loading, setLoading] = useState(
+    () => projectsCache === null || projectTypesCache === null,
+  );
+  // Даже при наличии module cache текущий mount сначала должен подтвердить его
+  // свежим атомарным снимком projects + project_types. Пока этого не произошло,
+  // страницы могут показывать cache, но не должны канонизировать URL по нему.
+  const [isAuthoritative, setIsAuthoritative] = useState(false);
   const [error, setError] = useState(null);
   const fetchSeq = useRef(0);
 
-  const fetchProjects = useCallback(async (isInitial = false) => {
+  const fetchProjects = useCallback(async (
+    isInitial = false,
+    promoteAuthority = true,
+  ) => {
+    if (!isInitial) {
+      // Realtime-событие означает, что текущий snapshot уже потенциально устарел.
+      // Отзываем право канонизировать URL до завершения нового атомарного fetch.
+      setIsAuthoritative(false);
+    }
     // autoCancellation у PocketBase отключён, поэтому защищаемся от гонки
     // сами: ответ применяется только если за время ожидания не стартовал
     // более новый запрос (иначе устаревшие данные перетёрли бы свежие).
@@ -96,29 +113,44 @@ export function useProjects() {
       if (seq !== fetchSeq.current) return;
 
       const typeOrder = new Map(
-        (typesData || []).map((t, i) => [t.name, t.sort_order ?? i])
+        (typesData || []).map((t, i) => [
+          normalizeCatalogProjectType(t.name),
+          t.sort_order ?? i,
+        ])
       );
+      const configuredTypes = new Set(typeOrder.keys());
+      const nextTypes = (typesData || []).map((type) => type.name).filter(Boolean);
 
       const normalized = (projectsData || [])
         .map(normalizeProject)
+        .filter((project) =>
+          configuredTypes.has(normalizeCatalogProjectType(project.type)),
+        )
         .sort((a, b) => {
-          const orderA = typeOrder.get(a.type) ?? 999;
-          const orderB = typeOrder.get(b.type) ?? 999;
+          const orderA =
+            typeOrder.get(normalizeCatalogProjectType(a.type)) ?? 999;
+          const orderB =
+            typeOrder.get(normalizeCatalogProjectType(b.type)) ?? 999;
           if (orderA !== orderB) return orderA - orderB;
           return (a.sortOrderInCategory ?? 999) - (b.sortOrderInCategory ?? 999);
         });
 
       projectsCache = normalized;
+      projectTypesCache = nextTypes;
       setProjects(normalized);
+      setTypes(nextTypes);
       setError(null);
+      if (promoteAuthority) setIsAuthoritative(true);
     } catch (err) {
       if (isPocketbaseAbortError(err)) {
         return;
       }
       if (seq !== fetchSeq.current) return;
-      projectsCache = null;
       setError(err);
-      setProjects([]);
+      // Ошибка refresh не превращает последний успешный snapshot в
+      // авторитетную пустую выборку. Оставляем cache на экране, но запрещаем
+      // URL-канонизацию до следующего успешного атомарного refresh.
+      setIsAuthoritative(false);
     } finally {
       if (isInitial) {
         setLoading(false);
@@ -131,7 +163,9 @@ export function useProjects() {
     let removeChannel = () => {};
 
     (async function init() {
-      await fetchProjects(true);
+      // Первый snapshot можно показать сразу, но он ещё не закрывает окно
+      // между fetch и установкой обеих realtime-подписок.
+      await fetchProjects(true, false);
       if (cancelled) return;
 
       const unsubscribe = await subscribeToPocketbaseCollections(
@@ -147,9 +181,13 @@ export function useProjects() {
       removeChannel = () => {
         unsubscribe();
       };
+      // Повторный атомарный fetch после подписки закрывает пропущенное окно;
+      // только этот snapshot получает право канонизировать URL.
+      await fetchProjects(false, true);
     })().catch((err) => {
       if (!cancelled && !isPocketbaseAbortError(err)) {
         setError(err);
+        setIsAuthoritative(false);
       }
     });
 
@@ -159,5 +197,5 @@ export function useProjects() {
     };
   }, [fetchProjects]);
 
-  return { projects, loading, error };
+  return { projects, types, loading, isAuthoritative, error };
 }

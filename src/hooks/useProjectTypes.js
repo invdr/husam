@@ -3,11 +3,9 @@ import { pb } from "@/lib/pocketbase";
 import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 
-const DEFAULT_TYPES = ["Дизайн проекты", "Ремонт", "Строительство"];
-
 /**
  * Загружает категории проектов из PocketBase (коллекция project_types).
- * При ошибке или пустой таблице — используется дефолтный список.
+ * Пустая таблица означает, что публичных категорий сейчас нет.
  * @returns {{ types: string[], loading: boolean, error: Error | null, refetch: () => Promise<void> }}
  */
 export function useProjectTypes() {
@@ -30,11 +28,11 @@ export function useProjectTypes() {
         .map((r) => r.name)
         .filter(Boolean);
 
-      setTypes(names.length > 0 ? names : DEFAULT_TYPES);
+      setTypes(names);
       setError(null);
     } catch (err) {
       if (!mountedRef.current) return;
-      setTypes(DEFAULT_TYPES);
+      setTypes([]);
       setError(err);
     } finally {
       if (mountedRef.current) setLoading(false);

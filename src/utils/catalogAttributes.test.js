@@ -247,5 +247,24 @@ describe("catalogAttributes", () => {
         getCatalogSortDurationComparable(long),
       );
     });
+
+    it("срок сортируется в единых месяцах для месяцев и лет", () => {
+      const tenMonths = { attributes: { duration: "10 месяцев" } };
+      const oneYear = { attributes: { duration: "1 год" } };
+      const compound = { attributes: { duration: "1 год 6 месяцев" } };
+
+      expect(getCatalogSortDurationComparable(tenMonths)).toBe(10);
+      expect(getCatalogSortDurationComparable(oneYear)).toBe(12);
+      expect(getCatalogSortDurationComparable(compound)).toBe(18);
+    });
+
+    it("срок использует legacy fallback при whitespace-only атрибуте", () => {
+      expect(
+        getCatalogSortDurationComparable({
+          duration: "1 год",
+          attributes: { duration: "   " },
+        }),
+      ).toBe(12);
+    });
   });
 });

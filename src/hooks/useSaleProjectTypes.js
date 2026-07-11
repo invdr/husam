@@ -3,11 +3,9 @@ import { pb } from "@/lib/pocketbase";
 import { withRequestTimeout } from "@/lib/requestTimeout";
 import { useMountedRef } from "@/hooks/useMountedRef";
 
-const DEFAULT_TYPES = ["Дома", "Бани", "Гаражи"];
-
 /**
  * Загружает категории готовых проектов (sale_project_types).
- * Если таблица пока не создана, используется дефолтный список.
+ * Пустая или недоступная таблица не должна воскрешать удалённые категории.
  */
 export function useSaleProjectTypes() {
   const [types, setTypes] = useState([]);
@@ -29,11 +27,11 @@ export function useSaleProjectTypes() {
         .map((row) => row.name)
         .filter(Boolean);
 
-      setTypes(names.length > 0 ? names : DEFAULT_TYPES);
+      setTypes(names);
       setError(null);
     } catch (err) {
       if (!mountedRef.current) return;
-      setTypes(DEFAULT_TYPES);
+      setTypes([]);
       setError(err);
     } finally {
       if (mountedRef.current) setLoading(false);

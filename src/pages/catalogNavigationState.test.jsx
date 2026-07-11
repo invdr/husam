@@ -11,27 +11,17 @@ const saleProjectsMock = vi.hoisted(() => ({ value: [] }));
 vi.mock("@/hooks/useProjects", () => ({
   useProjects: () => ({
     projects: catalogProjectsMock.value,
-    loading: false,
-  }),
-}));
-
-vi.mock("@/hooks/useProjectTypes", () => ({
-  useProjectTypes: () => ({
     types: ["Ремонт"],
+    loading: false,
   }),
 }));
 
 vi.mock("@/hooks/useSaleProjects", () => ({
   useSaleProjects: () => ({
     projects: saleProjectsMock.value,
+    types: ["Дом"],
     loading: false,
     error: null,
-  }),
-}));
-
-vi.mock("@/hooks/useSaleProjectTypes", () => ({
-  useSaleProjectTypes: () => ({
-    types: ["Дом"],
   }),
 }));
 

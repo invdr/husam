@@ -13,10 +13,12 @@ import {
   getFilterMaterialsFromProjects,
   getFilterAreaRangesFromProjects,
   getFilterRoomsFromProjects,
+  getFilterPriceRangesFromProjects,
   matchAreaFilter,
   matchRoomsFilter,
   matchMaterialFilter,
   matchFloorsFilter,
+  matchPriceFilter,
   FILTER_ANY,
 } from "./saleProjectAttributes.js";
 
@@ -132,7 +134,7 @@ describe("saleProjectAttributes", () => {
     it("включает только поля с непустыми значениями", () => {
       const project = { bedrooms: "3", area: "120", floors: "", material: "Кирпич" };
       const fields = getSaleDisplayFields(project);
-      expect(fields.some((f) => f.label === "Количество спален" && f.value === "3")).toBe(true);
+      expect(fields.some((f) => f.label === "Спальни" && f.value === "3")).toBe(true);
       expect(fields.some((f) => f.label === "Площадь дома" && f.value === "120")).toBe(true);
       expect(fields.some((f) => f.label === "Стены" && f.value === "Кирпич")).toBe(true);
     });
@@ -239,7 +241,22 @@ describe("saleProjectAttributes", () => {
 
     it("не включает пустые комнаты в диапазон до 1", () => {
       const options = getFilterRoomsFromProjects([{ rooms: "" }]);
-      expect(options).toEqual([{ value: FILTER_ANY, label: "Любое" }]);
+      expect(options).toEqual([{ value: FILTER_ANY, label: "Любые" }]);
+    });
+  });
+
+  describe("getFilterPriceRangesFromProjects", () => {
+    it("показывает только непустые диапазоны стоимости", () => {
+      const options = getFilterPriceRangesFromProjects([
+        { price: "23 200 ₽" },
+        { price: "41 500 ₽" },
+      ]);
+
+      expect(options).toEqual([
+        { value: FILTER_ANY, label: "Любая" },
+        { value: "0-29999", label: "до 30 000 ₽" },
+        { value: "40000-49999", label: "40 000 – 50 000 ₽" },
+      ]);
     });
   });
 
@@ -271,6 +288,14 @@ describe("saleProjectAttributes", () => {
 
     it("не матчится по выбранному диапазону, если комнаты пустые", () => {
       expect(matchRoomsFilter({ rooms: "" }, "0-1")).toBe(false);
+    });
+  });
+
+  describe("matchPriceFilter", () => {
+    it("проверяет стоимость проекта по диапазону", () => {
+      expect(matchPriceFilter({ price: "49 400 ₽" }, "40000-49999")).toBe(true);
+      expect(matchPriceFilter({ price: "58 400 ₽" }, "40000-49999")).toBe(false);
+      expect(matchPriceFilter({ price: "" }, "0-29999")).toBe(false);
     });
   });
 
