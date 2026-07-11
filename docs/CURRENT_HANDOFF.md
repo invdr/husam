@@ -15,16 +15,14 @@ There is currently no `AGENTS.md` in this repository.
 ## Current State
 
 - Branch: `main`
-- Latest repository commit: `5cec7d6 fix: harden production flows and validation`.
-- Pending deployment adds image links to project detail pages in the home
-  portfolio, `/catalog`, and `/projects` while preserving carousel controls.
-- Latest deployed base commit: `cef39d5 Preserve catalog pagination on detail return`
-- Production also has the 2026-07-05 same-origin PocketBase hotfix from this worktree deployed; commit still pending.
+- Latest deployed frontend commit: `e2a9e41 fix: restore project card navigation`.
+- Project images and titles link to detail pages in the home portfolio,
+  `/catalog`, and `/projects` while carousel controls remain independent.
 - Production site: `https://husam.ru` and `http://husam.ru`
 - Production frontend server: `77.222.63.88`
 - Production frontend directory: `/var/www/husam-stroy`
 - Backend/API/files: PocketBase via nginx at `https://husam.ru/api/` and `https://api.husam.ru/`; HTTP equivalents remain available.
-- Current production frontend bundle: `assets/index-BylOFq6A.js`
+- Current production frontend bundle: `assets/index-C-jw6LJU.js`
 - PocketBase client resolves to same-origin `/` on `husam.ru`, `www.husam.ru`, and `77.222.63.88`; PocketBase SDK appends `/api/...` itself. Other hosts fall back to `https://api.husam.ru` unless `VITE_POCKETBASE_URL` is set.
 
 ## Critical TLS Note
@@ -105,11 +103,16 @@ After the project-card navigation fix on 2026-07-11:
 
 - `npm test` passed: 182 tests.
 - `npm run lint` passed.
-- `npm run build` passed; without `POCKETBASE_URL`, the local sitemap correctly
-  contained only the 5 static routes.
+- `POCKETBASE_URL=https://api.husam.ru npm run build` passed; sitemap contains
+  187 URLs.
 - Local browser smoke tests passed for image navigation from the home portfolio,
   `/catalog`, and `/projects`; carousel arrows continued to change images without
   navigating.
+- GitHub Actions verify and deploy passed on run `29145542975`, attempt 4.
+- Production `/`, `/catalog/DV-114`, `/projects/W-312-GNT`, and both PocketBase
+  health endpoints returned `200`; HTTP redirects to HTTPS with `301`.
+- `/var/www/husam-stroy` and its deployed directories are owned by
+  `deploy:deploy` with mode `755`, so automated rsync can preserve metadata.
 
 After the same-origin PocketBase hotfix on 2026-07-05:
 
