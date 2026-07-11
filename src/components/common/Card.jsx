@@ -25,9 +25,17 @@ const cardDescriptionVariants = {
   listingClamped: "text-xs sm:text-sm line-clamp-1",
 };
 
-export function Card({ children, variant = "default", className = "" }) {
+export function Card({
+  children,
+  variant = "default",
+  className = "",
+  ...props
+}) {
   return (
-    <div className={`${cardVariants[variant] || cardVariants.default} ${className}`}>
+    <div
+      className={`${cardVariants[variant] || cardVariants.default} ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );

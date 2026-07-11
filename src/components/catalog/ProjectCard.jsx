@@ -5,7 +5,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/common";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ProjectImage from "./ProjectImage";
 import { getCardDisplayFields } from "@/utils/catalogAttributes";
 
@@ -17,8 +17,25 @@ export default function ProjectCard({
   showDetails = true,
   titleHref,
 }) {
+  const navigate = useNavigate();
+  const handleCardClick = (event) => {
+    if (
+      !titleHref ||
+      event.defaultPrevented ||
+      event.target.closest?.("a, button, input, select, textarea")
+    ) {
+      return;
+    }
+
+    navigate(titleHref);
+  };
+
   return (
-    <Card variant="listing">
+    <Card
+      variant="listing"
+      onClick={handleCardClick}
+      className={titleHref ? "cursor-pointer" : ""}
+    >
       <div className="px-2 pt-2 pb-1 sm:px-3 sm:pt-3 sm:pb-1.5">
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
           <ProjectImage
