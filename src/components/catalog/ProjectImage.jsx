@@ -1,15 +1,30 @@
 import { useState, useRef, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
+import { Link } from "react-router-dom";
 import Icon from "@/components/common/Icon";
 
 const LOADER_DELAY_MS = 80;
+
+function ProjectImageLink({ detailHref, title, children }) {
+  if (!detailHref) return children;
+
+  return (
+    <Link
+      to={detailHref}
+      aria-label={`Открыть проект «${title}»`}
+      className="block h-full w-full rounded-[inherit] outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+    >
+      {children}
+    </Link>
+  );
+}
 
 // Карточка-обёртка (div role="button") слушает keydown и по Enter открывает
 // страницу проекта. Не даём Enter/Space на внутренних кнопках карусели
 // всплыть до неё — иначе вместо листания фото происходит переход.
 const stopKeyPropagation = (e) => e.stopPropagation();
 
-export default function ProjectImage({ project, className = "" }) {
+export default function ProjectImage({ project, className = "", detailHref }) {
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -68,11 +83,13 @@ export default function ProjectImage({ project, className = "" }) {
 
   if (images.length === 0 || imageError) {
     return (
-      <div
-        className={`${className} bg-gray-700 flex items-center justify-center text-gray-400`}
-      >
-        Нет изображения
-      </div>
+      <ProjectImageLink detailHref={detailHref} title={project.title}>
+        <div
+          className={`${className} bg-gray-700 flex items-center justify-center text-gray-400`}
+        >
+          Нет изображения
+        </div>
+      </ProjectImageLink>
     );
   }
 
@@ -81,23 +98,25 @@ export default function ProjectImage({ project, className = "" }) {
       {...(hasMultipleImages ? swipeHandlers : {})}
       className="relative h-full w-full group/image touch-pan-y"
     >
-      <img
-        src={images[currentImageIndex]}
-        alt={`${project.title} - фото ${currentImageIndex + 1}`}
-        className={className}
-        decoding="async"
-        loading="lazy"
-        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-        onLoad={handleImageLoad}
-        onError={() => {
-          setImageError(true);
-          handleImageLoad();
-        }}
-        crossOrigin="anonymous"
-      />
+      <ProjectImageLink detailHref={detailHref} title={project.title}>
+        <img
+          src={images[currentImageIndex]}
+          alt={`${project.title} - фото ${currentImageIndex + 1}`}
+          className={className}
+          decoding="async"
+          loading="lazy"
+          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+          onLoad={handleImageLoad}
+          onError={() => {
+            setImageError(true);
+            handleImageLoad();
+          }}
+          crossOrigin="anonymous"
+        />
+      </ProjectImageLink>
       {isImageLoading && (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-black/50 z-[5]"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/50 z-[5]"
           aria-hidden
         >
           <Icon

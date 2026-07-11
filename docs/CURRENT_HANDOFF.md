@@ -1,6 +1,6 @@
 # Current Handoff
 
-Last updated: 2026-07-05
+Last updated: 2026-07-11
 
 ## Start Here
 
@@ -15,6 +15,9 @@ There is currently no `AGENTS.md` in this repository.
 ## Current State
 
 - Branch: `main`
+- Latest repository commit: `5cec7d6 fix: harden production flows and validation`.
+- Pending deployment adds image links to project detail pages in the home
+  portfolio, `/catalog`, and `/projects` while preserving carousel controls.
 - Latest deployed base commit: `cef39d5 Preserve catalog pagination on detail return`
 - Production also has the 2026-07-05 same-origin PocketBase hotfix from this worktree deployed; commit still pending.
 - Production site: `https://husam.ru` and `http://husam.ru`
@@ -97,6 +100,16 @@ curl --tlsv1.2 --tls-max 1.2 -fsSL https://api.husam.ru/api/health
 Do not store SSH passwords, tokens, or private keys in docs or code.
 
 ## Last Known Checks
+
+After the project-card navigation fix on 2026-07-11:
+
+- `npm test` passed: 182 tests.
+- `npm run lint` passed.
+- `npm run build` passed; without `POCKETBASE_URL`, the local sitemap correctly
+  contained only the 5 static routes.
+- Local browser smoke tests passed for image navigation from the home portfolio,
+  `/catalog`, and `/projects`; carousel arrows continued to change images without
+  navigating.
 
 After the same-origin PocketBase hotfix on 2026-07-05:
 

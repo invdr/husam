@@ -115,7 +115,10 @@ function ArrowCarousel({ items, onMore }) {
           >
             {items.map((project) => (
               <div key={project.id} style={{ flex: `0 0 ${itemBasis}` }}>
-                <ProjectCard project={project}>
+                <ProjectCard
+                  project={project}
+                  titleHref={`/catalog/${project.id}`}
+                >
                   <button
                     onClick={() => onMore(project)}
                     className="flex-1 rounded-xl border border-brand px-3 py-2.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-brand hover:bg-brand hover:text-ink transition-colors"
