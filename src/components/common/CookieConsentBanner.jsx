@@ -33,13 +33,6 @@ export default function CookieConsentBanner() {
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
-            onClick={() => chooseConsent("rejected")}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
-          >
-            Отклонить
-          </button>
-          <button
-            type="button"
             onClick={() => chooseConsent("accepted")}
             className="inline-flex min-h-10 items-center justify-center rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-ink transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
           >
